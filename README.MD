@@ -122,3 +122,30 @@ Log lines beginning with `[CMD]` show the exact tool invocations.
 ## Development Notes
 Python standard library only. No external dependencies besides `yt-dlp` & `ffmpeg` executables.
 
+### Pre-commit Hooks (Black formatting)
+This repo can automatically format code before each commit using [pre-commit] and Black.
+
+Setup (once):
+```powershell
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+Run hooks on all files manually:
+```powershell
+pre-commit run --all-files
+```
+
+Update hook versions later:
+```powershell
+pre-commit autoupdate
+git add .pre-commit-config.yaml
+```
+
+If a commit is blocked, fix/accept Black changes, then:
+```powershell
+git add .
+git commit -m "Your message"
+```
+
+
