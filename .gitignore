@@ -1,0 +1,67 @@
+# Project-specific generated directories
+/downloads/
+/snippets/
+
+# Intermediate cut files
+*.cut.m4a
+
+# Audio artifacts that are likely generated
+*.m4a
+*.mp3
+*.wav
+# If you want to commit final curated outputs, comment the above three lines
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+*.part
+*.ytdl
+
+# Python cache / build
+__pycache__/
+*.py[cod]
+*$py.class
+.build/
+.eggs/
+*.egg-info/
+.dist/
+
+# Virtual environments
+.env
+.venv
+venv/
+ENV/
+env.bak/
+
+# Jupyter / notebooks checkpoints
+.ipynb_checkpoints/
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Coverage / test
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.mypy_cache/
+pytestdebug.log
+
+# Packaging
+build/
+dist/
+
+# Cache
+.cache/
+
+# Optional: comment these out if you wish to version them
+snippets.csv

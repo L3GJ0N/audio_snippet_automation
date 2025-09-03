@@ -38,7 +38,7 @@ import os
 import subprocess
 import sys
 import argparse
-import shlex
+import shlex  # still used for pretty logging on non-Windows
 
 def which(cmd):
     from shutil import which as _which
@@ -48,16 +48,39 @@ def die(msg, code=1):
     print(f"[ERROR] {msg}", file=sys.stderr)
     sys.exit(code)
 
-def run(cmd, cwd=None):
-    print(f"[CMD] {cmd}")
-    proc = subprocess.run(cmd, shell=True, cwd=cwd)
+def _log_cmd(args):
+    def _q(a):
+        # Pretty-print only; we are NOT passing through a shell
+        if os.name == 'nt':
+            # simple rule: quote with double quotes if space or special chars
+            if any(c.isspace() for c in a) or any(c in '()[]{}&|^=;!,`' for c in a):
+                return f'"{a}"'
+            return a
+        else:
+            return shlex.quote(a)
+    print("[CMD] " + " ".join(_q(str(a)) for a in args))
+
+def run(args, cwd=None):
+    if isinstance(args, str):  # backward safety
+        # fall back to shell execution (legacy) but warn
+        print("[WARN] run() received string; prefer list of args.")
+        print(f"[CMD] {args}")
+        proc = subprocess.run(args, shell=True, cwd=cwd)
+    else:
+        _log_cmd(args)
+        proc = subprocess.run(args, cwd=cwd)
     if proc.returncode != 0:
         die(f"Command failed with exit code {proc.returncode}")
 
-def run_get_output(cmd):
+def run_get_output(args):
     # returns stdout as str
-    print(f"[CMD] {cmd}")
-    proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if isinstance(args, str):
+        print("[WARN] run_get_output() received string; prefer list of args.")
+        print(f"[CMD] {args}")
+        proc = subprocess.run(args, shell=True, capture_output=True, text=True)
+    else:
+        _log_cmd(args)
+        proc = subprocess.run(args, capture_output=True, text=True)
     if proc.returncode != 0:
         die(f"Command failed with exit code {proc.returncode}: {proc.stderr.strip()}")
     return proc.stdout.strip()
@@ -103,16 +126,17 @@ def main():
                 continue
 
             # 1) Get video ID to create stable temp filename
-            vid = run_get_output(f'yt-dlp --no-playlist --get-id {shlex.quote(url)}')
+            # IMPORTANT: Avoid POSIX shlex.quote on Windows with shell=True; pass raw arg list.
+            vid = run_get_output(['yt-dlp', '--no-playlist', '--get-id', url])
             # 2) Download best audio as M4A into tempdir
             temp_audio = os.path.join(args.tempdir, f"{vid}.m4a")
-            dl_cmd = (
-                f'yt-dlp -x --audio-format m4a '
-                f'-o {shlex.quote(os.path.join(args.tempdir, "%(id)s.%(ext)s"))} '
-                f'--no-playlist {shlex.quote(url)}'
-            )
+            dl_args = [
+                'yt-dlp', '-x', '--audio-format', 'm4a',
+                '-o', os.path.join(args.tempdir, '%(id)s.%(ext)s'),
+                '--no-playlist', url
+            ]
             if not os.path.exists(temp_audio):
-                run(dl_cmd)
+                run(dl_args)
             else:
                 print(f"[INFO] Using cached: {temp_audio}")
 
@@ -125,17 +149,15 @@ def main():
             out_path_noext = os.path.join(args.outdir, out_base)
             cut_tmp = out_path_noext + ".cut.m4a"
             if args.precise:
-                # re-encode to AAC for accurate cut
-                ff_cut = (
-                    f'ffmpeg -y -ss {start} -to {end} -i {shlex.quote(temp_audio)} '
-                    f'-c:a aac -b:a 192k {shlex.quote(cut_tmp)}'
-                )
+                ff_cut = [
+                    'ffmpeg', '-y', '-ss', start, '-to', end, '-i', temp_audio,
+                    '-c:a', 'aac', '-b:a', '192k', cut_tmp
+                ]
             else:
-                # fast stream copy (may cut a few ms off depending on container)
-                ff_cut = (
-                    f'ffmpeg -y -ss {start} -to {end} -i {shlex.quote(temp_audio)} '
-                    f'-c copy {shlex.quote(cut_tmp)}'
-                )
+                ff_cut = [
+                    'ffmpeg', '-y', '-ss', start, '-to', end, '-i', temp_audio,
+                    '-c', 'copy', cut_tmp
+                ]
             run(ff_cut)
 
             # 5) Convert to requested format if needed
@@ -146,10 +168,10 @@ def main():
                     os.remove(final_path)
                 os.replace(cut_tmp, final_path)
             elif fmt == "mp3":
-                run(f'ffmpeg -y -i {shlex.quote(cut_tmp)} -q:a 2 {shlex.quote(final_path)}')
+                run(['ffmpeg', '-y', '-i', cut_tmp, '-q:a', '2', final_path])
                 os.remove(cut_tmp)
             elif fmt == "wav":
-                run(f'ffmpeg -y -i {shlex.quote(cut_tmp)} {shlex.quote(final_path)}')
+                run(['ffmpeg', '-y', '-i', cut_tmp, final_path])
                 os.remove(cut_tmp)
 
             print(f"[OK] Wrote {final_path}")
