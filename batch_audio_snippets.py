@@ -95,6 +95,48 @@ def time_str(t):
     # pass-through; allow "SS.sss" or "HH:MM:SS(.sss)"
     return str(t).strip()
 
+def add_cookie_args(args_list, cookie_browser):
+    """Add cookie arguments to yt-dlp command with error handling"""
+    if not cookie_browser:
+        return args_list
+    
+    # Try cookies-from-browser first
+    return args_list + ['--cookies-from-browser', cookie_browser]
+
+def run_with_cookie_fallback(args_list, cookie_browser, cookie_file, url):
+    """Run yt-dlp command with cookie fallback on failure"""
+    # Determine cookie method
+    if cookie_file:
+        try:
+            return run_get_output(args_list + ['--cookies', cookie_file, url])
+        except SystemExit:
+            print("[ERROR] Failed with cookie file. Check that the file exists and is valid.")
+            raise
+    
+    if not cookie_browser:
+        return run_get_output(args_list + [url])
+    
+    # Try with cookies from browser
+    try:
+        cookie_args = args_list + ['--cookies-from-browser', cookie_browser, url]
+        return run_get_output(cookie_args)
+    except SystemExit:
+        # Cookie extraction failed, suggest solutions and try without cookies
+        print(f"[WARN] Cookie extraction from {cookie_browser} failed.")
+        print("[WARN] This usually happens when the browser is running.")
+        print("[WARN] Try: 1) Close all browser windows, 2) Use --cookies file instead, or 3) Try without cookies.")
+        print("[WARN] Attempting without cookies...")
+        
+        try:
+            return run_get_output(args_list + [url])
+        except SystemExit:
+            print("[ERROR] Failed both with and without cookies. Video may be age-restricted and require authentication.")
+            print("[HELP] Solutions:")
+            print(f"[HELP] 1. Close ALL {cookie_browser} windows and try again")
+            print("[HELP] 2. Export cookies manually: https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp")
+            print("[HELP] 3. Use a different browser (try --cookies-from-browser firefox)")
+            raise
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", required=True, help="Path to CSV with jobs")
@@ -102,6 +144,8 @@ def main():
     parser.add_argument("--precise", action="store_true", help="Re-encode for precise cuts (useful if copy cuts are off)")
     parser.add_argument("--outdir", default="snippets", help="Output directory")
     parser.add_argument("--tempdir", default="downloads", help="Temp download dir")
+    parser.add_argument("--cookies-from-browser", help="Browser to extract cookies from (chrome, firefox, safari, etc.) for age-restricted videos")
+    parser.add_argument("--cookies", help="Path to cookies.txt file for age-restricted videos")
     args = parser.parse_args()
 
     ensure_tools()
@@ -126,17 +170,34 @@ def main():
                 continue
 
             # 1) Get video ID to create stable temp filename
-            # IMPORTANT: Avoid POSIX shlex.quote on Windows with shell=True; pass raw arg list.
-            vid = run_get_output(['yt-dlp', '--no-playlist', '--get-id', url])
+            # Use fallback function to handle cookie extraction errors
+            get_id_args = ['yt-dlp', '--no-playlist', '--get-id']
+            vid = run_with_cookie_fallback(get_id_args, getattr(args, 'cookies_from_browser', None), getattr(args, 'cookies', None), url)
+            
             # 2) Download best audio as M4A into tempdir
             temp_audio = os.path.join(args.tempdir, f"{vid}.m4a")
-            dl_args = [
-                'yt-dlp', '-x', '--audio-format', 'm4a',
-                '-o', os.path.join(args.tempdir, '%(id)s.%(ext)s'),
-                '--no-playlist', url
-            ]
             if not os.path.exists(temp_audio):
-                run(dl_args)
+                dl_args = [
+                    'yt-dlp', '-x', '--audio-format', 'm4a',
+                    '-o', os.path.join(args.tempdir, '%(id)s.%(ext)s'),
+                    '--no-playlist'
+                ]
+                # Handle cookies for download
+                try:
+                    if getattr(args, 'cookies', None):
+                        cookie_dl_args = dl_args + ['--cookies', args.cookies, url]
+                        run(cookie_dl_args)
+                    elif getattr(args, 'cookies_from_browser', None):
+                        cookie_dl_args = dl_args + ['--cookies-from-browser', args.cookies_from_browser, url]
+                        run(cookie_dl_args)
+                    else:
+                        run(dl_args + [url])
+                except SystemExit:
+                    if getattr(args, 'cookies_from_browser', None):
+                        print("[WARN] Download with cookies failed, trying without cookies...")
+                        run(dl_args + [url])
+                    else:
+                        raise
             else:
                 print(f"[INFO] Using cached: {temp_audio}")
 

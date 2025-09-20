@@ -1,6 +1,31 @@
 ## Batch YouTube Audio Snippet Extractor
 
-Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file.
+Create multiple precisely trimmed audio snippets from YouTube ## Troubleshooting
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| URL reported "not a valid URL" | Quotes were passed literally (older version) | Use updated script (argument list, no shell quoting) |
+| `yt-dlp` not found | Not installed / PATH issue | `pip install yt-dlp` ; check `yt-dlp --version` |
+| `ffmpeg` not found | Not installed / PATH issue | Install via Scoop/Choco or add to PATH |
+| Empty output file | Cut range too short or outside duration | Verify start/end within video length |
+| Slight time inaccuracy | Container keyframe boundaries | Use `--precise` |
+| "Sign in to confirm your age" | Age-restricted video | Add `--cookies-from-browser chrome` (or firefox, safari, etc.) |
+| "Could not copy Chrome cookie database" | Browser is running / cookie locked | **Close ALL browser windows** and try again, or try `firefox` instead |
+
+### Cookie Issues (Age-restricted videos)
+
+**Problem**: `Could not copy Chrome cookie database` or similar errors.
+
+**Solutions** (try in order):
+1. **Close ALL browser windows** completely and try again
+2. Try a different browser: `--cookies-from-browser firefox` 
+3. Export cookies manually:
+   - Install browser extension like "Get cookies.txt"
+   - Export cookies for youtube.com to `cookies.txt`
+   - Use: `python batch_audio_snippets.py --csv snippets.csv --cookies cookies.txt`
+4. Use incognito/private mode approach (won't work for age-restricted)
+
+**Why this happens**: Browsers lock their cookie databases while running. The script can't read them when the browser is open.g a single CSV file.
 
 ### Why use this?
 - Batch workflow (no copying timestamps manually one-by-one)
@@ -69,6 +94,7 @@ https://www.youtube.com/watch?v=42N62Z5E7-s,00:00:03,00:00:05,thanos-like_to_los
 | `--precise` | Re-encode for frame-accurate cuts (slower, quality maintained) |
 | `--outdir DIR` | Where final snippets are written (default `snippets`) |
 | `--tempdir DIR` | Where source downloads are cached (default `downloads`) |
+| `--cookies-from-browser BROWSER` | Extract cookies from browser for age-restricted videos (chrome, firefox, safari, etc.) |
 
 ### Example (matches repo data)
 ```powershell
@@ -83,6 +109,11 @@ python batch_audio_snippets.py --csv .\snippets.csv --format mp3
 ### Frame-accurate cuts (use if edges are off)
 ```powershell
 python batch_audio_snippets.py --csv .\snippets.csv --precise
+```
+
+### Age-restricted videos (requires browser cookies)
+```powershell
+python batch_audio_snippets.py --csv .\snippets.csv --cookies-from-browser chrome
 ```
 
 ---
