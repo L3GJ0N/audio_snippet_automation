@@ -1,6 +1,8 @@
 # Project-specific generated directories
 /downloads/
 /snippets/
+/examples/downloads/
+/examples/snippets/
 
 # Intermediate cut files
 *.cut.m4a
@@ -25,14 +27,17 @@ __pycache__/
 .build/
 .eggs/
 *.egg-info/
-.dist/
+dist/
+build/
 
 # Virtual environments
 .env
 .venv
 venv/
 ENV/
+env/
 env.bak/
+.uv/
 
 # Jupyter / notebooks checkpoints
 .ipynb_checkpoints/
@@ -55,13 +60,20 @@ htmlcov/
 .tox/
 .mypy_cache/
 pytestdebug.log
+coverage.xml
 
 # Packaging
 build/
 dist/
+*.egg-info/
 
 # Cache
 .cache/
+.ruff_cache/
+
+# Documentation builds
+docs/_build/
+site/
 
 # Optional: comment these out if you wish to version them
-snippets.csv
+# examples/snippets.csv
