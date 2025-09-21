@@ -1,10 +1,18 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.4.2  # Pin to a specific released version
+    rev: 24.4.2
     hooks:
       - id: black
         language_version: python3
         args: ["--line-length", "88"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -12,3 +20,5 @@ repos:
       - id: trailing-whitespace
       - id: check-added-large-files
         args: ["--maxkb=5000"]
+      - id: check-yaml
+      - id: check-toml
