@@ -1,588 +1,251 @@
-# Audio Snippet Automation# Audio Snippet Automation## Batch YouTube Audio Snippet Extractor
+# Audio Snippet Automation
 
-
+Create multiple precisely trimmed audio snippets from YouTube URLs using a simple CSV file.
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)Create multiple precisely trimmed audio snippets from YouTube ## Troubleshooting
+## What Does This Do?
 
-Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file.
+This tool automates the process of creating audio snippets from YouTube videos. Instead of manually downloading videos and cutting them one by one, you can:
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+1. **Create a CSV file** with YouTube URLs, start times, end times, and output names
+2. **Run one command** to process all entries automatically
+3. **Get perfectly trimmed audio files** ready to use
 
-## Features
-
-| Problem | Cause | Fix |
-
-- 🎵 **Batch processing** - Process multiple videos at once
-
-- 📊 **CSV-driven** - Simple spreadsheet interfaceCreate multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file.|---------|-------|-----|
-
-- 🎯 **Precise cutting** - Frame-accurate timestamps
-
-- 🔄 **Smart caching** - Reuse downloads between runs| URL reported "not a valid URL" | Quotes were passed literally (older version) | Use updated script (argument list, no shell quoting) |
-
-- 🌐 **Format support** - Output as M4A, MP3, or WAV
-
-- 🔐 **Age-restricted videos** - Cookie support for restricted content## Features| `yt-dlp` not found | Not installed / PATH issue | `pip install yt-dlp` ; check `yt-dlp --version` |
-
-- 🐍 **Modern Python** - Built with modern tooling and best practices
-
-| `ffmpeg` not found | Not installed / PATH issue | Install via Scoop/Choco or add to PATH |
-
-## Quick Start
-
-- 🎵 **Batch processing** - Process multiple videos at once| Empty output file | Cut range too short or outside duration | Verify start/end within video length |
-
-### Prerequisites
-
-- 📊 **CSV-driven** - Simple spreadsheet interface| Slight time inaccuracy | Container keyframe boundaries | Use `--precise` |
-
-- **Python 3.9+**
-
-- **uv** package manager ([installation guide](https://docs.astral.sh/uv/getting-started/installation/))- 🎯 **Precise cutting** - Frame-accurate timestamps| "Sign in to confirm your age" | Age-restricted video | Add `--cookies-from-browser chrome` (or firefox, safari, etc.) |
-
-- **ffmpeg** ([installation guide](https://ffmpeg.org/download.html))
-
-- 🔄 **Smart caching** - Reuse downloads between runs| "Could not copy Chrome cookie database" | Browser is running / cookie locked | **Close ALL browser windows** and try again, or try `firefox` instead |
-
-### Installation
-
-- 🌐 **Format support** - Output as M4A, MP3, or WAV
-
-```bash
-
-# Clone the repository- 🔐 **Age-restricted videos** - Cookie support for restricted content### Cookie Issues (Age-restricted videos)
-
-git clone https://github.com/L3GJ0N/audio_snippet_automation.git
-
-cd audio_snippet_automation- 🐍 **Modern Python** - Built with modern tooling and best practices
-
-
-
-# Install with uv (recommended)**Problem**: `Could not copy Chrome cookie database` or similar errors.
-
-uv sync
-
-## Quick Start
-
-# Or install in development mode
-
-uv pip install -e .**Solutions** (try in order):
-
-```
-
-### Prerequisites1. **Close ALL browser windows** completely and try again
-
-### Usage
-
-2. Try a different browser: `--cookies-from-browser firefox`
-
-```bash
-
-# Using uv- **Python 3.9+**3. Export cookies manually:
-
-uv run audio-snippet-automation --csv examples/snippets.csv
-
-- **uv** package manager ([installation guide](https://docs.astral.sh/uv/getting-started/installation/))   - Install browser extension like "Get cookies.txt"
-
-# Or if installed globally
-
-audio-snippet-automation --csv examples/snippets.csv- **ffmpeg** ([installation guide](https://ffmpeg.org/download.html))   - Export cookies for youtube.com to `cookies.txt`
-
-
-
-# Short alias   - Use: `python batch_audio_snippets.py --csv snippets.csv --cookies cookies.txt`
-
-asa --csv examples/snippets.csv
-
-```### Installation4. Use incognito/private mode approach (won't work for age-restricted)
-
-
-
-## CSV Format
-
-
-
-Create a CSV file with the following columns:```bash**Why this happens**: Browsers lock their cookie databases while running. The script can't read them when the browser is open.g a single CSV file.
-
-
-
-| Column  | Required | Description |# Clone the repository
-
-|---------|----------|-------------|
-
-| `url`   | ✅ | YouTube URL (any format) |git clone https://github.com/L3GJ0N/audio_snippet_automation.git### Why use this?
-
-| `start` | ✅ | Start time: `SS(.ms)` or `HH:MM:SS(.ms)` |
-
-| `end`   | ✅ | End time (same format as start) |cd audio_snippet_automation- Batch workflow (no copying timestamps manually one-by-one)
-
-| `output`| ❌ | Custom filename (without extension) |
-
-| `format`| ❌ | Override format (`m4a`, `mp3`, `wav`) |- Supports multiple output formats (m4a, mp3, wav)
-
-
-
-### Example CSV# Install with uv (recommended)- Optional frame-accurate cutting (`--precise`)
-
-
-
-```csvuv sync- Re-uses cached downloads if you re-run
-
-url,start,end,output,format
-
-https://www.youtube.com/watch?v=dQw4w9WgXcQ,00:00:05,00:00:12,rick-intro,m4a
-
-https://youtu.be/dQw4w9WgXcQ,5,12,rick-chorus,mp3
-
-```# Or install in development mode---
-
-
-
-## Command Optionsuv pip install -e .## Quick Start (Windows 10/11)
-
-
-
-```bash```
-
-audio-snippet-automation --help
-
-``````powershell
-
-
-
-| Option | Description | Default |### Usage# 1. (Optional) Create and activate a virtual environment
-
-|--------|-------------|---------|
-
-| `--csv PATH` | CSV file with jobs | Required |python -m venv .venv
-
-| `--format {m4a,mp3,wav}` | Default output format | `m4a` |
-
-| `--precise` | Frame-accurate cuts (slower) | Fast copy |```bash./.venv/Scripts/Activate.ps1
-
-| `--outdir DIR` | Output directory | `snippets` |
-
-| `--tempdir DIR` | Cache directory | `downloads` |# Using uv
-
-| `--cookies-from-browser BROWSER` | Browser cookies for age-restricted videos | None |
-
-| `--cookies PATH` | Cookie file for age-restricted videos | None |uv run audio-snippet-automation --csv examples/snippets.csv# 2. Install required tools
-
-
-
-### Examplespip install --upgrade yt-dlp
-
-
-
-```bash# Or if installed globally
-
-# Basic usage
-
-uv run asa --csv my-clips.csvaudio-snippet-automation --csv examples/snippets.csv# 3. Install ffmpeg (choose ONE method)
-
-
-
-# Custom output format and directories# a) Scoop (recommended):
-
-uv run asa --csv clips.csv --format mp3 --outdir my-snippets
-
-# Short alias#   Install Scoop if you don't have it:  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser; iwr get.scoop.sh -useb | iex
-
-# Precise cuts (re-encode for accuracy)
-
-uv run asa --csv clips.csv --preciseasa --csv examples/snippets.csv#   Then:
-
-
-
-# Age-restricted videos (browser cookies)```scoop install ffmpeg
-
-uv run asa --csv clips.csv --cookies-from-browser chrome
-
-# b) Chocolatey:
-
-# Age-restricted videos (cookie file)
-
-uv run asa --csv clips.csv --cookies cookies.txt## CSV Format#   choco install ffmpeg
-
-```
-
-# c) Manual: Download static build from https://www.gyan.dev/ffmpeg/ and add its /bin folder to PATH.
+Perfect for creating sound effects, voice clips, music samples, or any audio content from YouTube videos.
 
 ## How It Works
 
-Create a CSV file with the following columns:
+The tool reads a CSV file where each row defines:
+- `url`: YouTube video URL
+- `start`: When to start cutting (e.g., `00:01:23.500`)
+- `end`: When to stop cutting (e.g., `00:01:30.000`)
+- `output`: Filename for the audio snippet
+- `format`: Audio format (m4a, mp3, wav)
 
-1. Reads each CSV row
+**Example CSV:**
+```csv
+url,start,end,output,format
+https://www.youtube.com/watch?v=J_vOzkxKfzk,00:00:14,00:00:17,thanos-like_to_lose,m4a
+https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handle_truth,m4a
+```
 
-2. Fetches the video ID (`yt-dlp --get-id`)# 4. Verify tools
+## Installation
 
-3. Downloads best audio (cached in `downloads/`)
+### Prerequisites
+You need these installed on your system:
 
-4. Cuts with `ffmpeg` (fast stream copy or precise re-encode)| Column  | Required | Description |yt-dlp --version
+1. **Python 3.9 or newer** - [Download here](https://www.python.org/downloads/)
+2. **uv package manager** - [Installation guide](https://docs.astral.sh/uv/getting-started/installation/)
+3. **ffmpeg** - [Download here](https://ffmpeg.org/download.html)
 
-5. Converts / renames to desired format
-
-|---------|----------|-------------|ffmpeg -version
-
-Re-running with the same CSV is fast because existing downloads are reused.
-
-| `url`   | ✅ | YouTube URL (any format) |
-
-## Development
-
-| `start` | ✅ | Start time: `SS(.ms)` or `HH:MM:SS(.ms)` |# 5. Run using the provided CSV
-
-### Setup Development Environment
-
-| `end`   | ✅ | End time (same format as start) |python batch_audio_snippets.py --csv snippets.csv --format m4a --outdir snippets --tempdir downloads
+### Install the Tool
 
 ```bash
-
-# Clone and setup| `output`| ❌ | Custom filename (without extension) |```
-
+# Clone the repository
 git clone https://github.com/L3GJ0N/audio_snippet_automation.git
+cd audio_snippet_automation
 
-cd audio_snippet_automation| `format`| ❌ | Override format (`m4a`, `mp3`, `wav`) |
+# Install with uv (recommended)
+uv sync
 
-
-
-# Install with dev dependenciesAfter running, trimmed files appear in `snippets/`. Source downloads (cached) are stored in `downloads/`.
-
-uv sync --extra dev
-
-### Example CSV
-
-# Install pre-commit hooks
-
-uv run pre-commit install---
-
+# Or install with pip
+pip install -e .
 ```
 
-```csv## CSV Format
-
-### Running Tests
-
-url,start,end,output,formatFile must have a header row. Columns:
+### Verify Installation
 
 ```bash
+# Check if the tool is installed
+asa --help
 
-# Run all testshttps://www.youtube.com/watch?v=dQw4w9WgXcQ,00:00:05,00:00:12,rick-intro,m4a
+# Or use the full command name
+audio-snippet-automation --help
 
-uv run pytest
-
-https://youtu.be/dQw4w9WgXcQ,5,12,rick-chorus,mp3| Column  | Required | Description |
-
-# Run with coverage
-
-uv run pytest --cov```|---------|----------|-------------|
-
-
-
-# Run specific test| url     | yes      | Full YouTube link (any normal watch or youtu.be URL) |
-
-uv run pytest tests/test_core.py::test_time_str
-
-```## Command Options| start   | yes      | Start time: `SS(.ms)` or `HH:MM:SS(.ms)` |
-
-
-
-### Code Quality| end     | yes      | End time (same formats). Must be > start |
-
-
-
-```bash```bash| output  | no       | Base filename (without extension). If blank, video ID is used |
-
-# Format code
-
-uv run black .audio-snippet-automation --help| format  | no       | Override format for that row (`m4a`, `mp3`, `wav`) |
-
-
-
-# Lint code```
-
-uv run ruff check .
-
-Example (`snippets.csv`) currently in this repo:
-
-# Type checking (if mypy is added)
-
-uv run mypy src/| Option | Description | Default |```
-
+# Verify dependencies
+yt-dlp --version
+ffmpeg -version
 ```
 
-|--------|-------------|---------|url,start,end,output,format
+## Usage
+
+### Basic Usage
+
+```bash
+# Process a CSV file
+asa --csv examples/snippets.csv
+
+# Or use the full command name
+audio-snippet-automation --csv examples/snippets.csv
+
+# If using uv in development
+uv run audio-snippet-automation --csv examples/snippets.csv
+```
+
+### CSV Format
+
+Create a CSV file with these columns:
+
+| Column   | Required | Description                              | Example                    |
+|----------|----------|------------------------------------------|----------------------------|
+| `url`    | ✅        | YouTube URL (any format)                | `https://youtu.be/abc123`  |
+| `start`  | ✅        | Start time: `SS(.ms)` or `HH:MM:SS(.ms)` | `00:01:23.500`             |
+| `end`    | ✅        | End time (same format as start)         | `00:01:30.000`             |
+| `output` | ❌        | Custom filename (without extension)     | `my_audio_clip`            |
+| `format` | ❌        | Override format (`m4a`, `mp3`, `wav`)    | `mp3`                      |
+
+### Example CSV File
+
+```csv
+url,start,end,output,format
+https://www.youtube.com/watch?v=J_vOzkxKfzk,00:00:14,00:00:17,thanos-like_to_lose,m4a
+https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handle_truth,m4a
+https://www.youtube.com/watch?v=31Voz1H40zI,00:01:22.110,00:01:23.800,i_am_the_danger,m4a
+```
+
+### Advanced Options
+
+```bash
+# Use cookies for age-restricted videos
+asa --csv snippets.csv --cookies-from-browser chrome
+
+# Or use Firefox cookies
+asa --csv snippets.csv --cookies-from-browser firefox
+
+# Use external cookie file
+asa --csv snippets.csv --cookies cookies.txt
+
+# Specify output directory
+asa --csv snippets.csv --output-dir ./my_snippets
+
+# Use different audio format (default: m4a)
+asa --csv snippets.csv --format mp3
+
+# Enable precise cutting (slower but more accurate)
+asa --csv snippets.csv --precise
+```
+
+## Time Format Guide
+
+You can specify times in multiple formats:
+
+- **Seconds only**: `45` or `45.5`
+- **Minutes and seconds**: `01:23` or `01:23.5`
+- **Hours, minutes, seconds**: `00:01:23` or `00:01:23.500`
+
+**Examples:**
+- `15` = 15 seconds
+- `01:30` = 1 minute 30 seconds
+- `00:02:45.250` = 2 minutes 45.25 seconds
+
+## Features
+
+- 🎵 **Batch processing** - Process multiple videos at once
+- 📊 **CSV-driven** - Simple spreadsheet interface
+- 🎯 **Precise cutting** - Frame-accurate timestamps with `--precise`
+- 🔄 **Smart caching** - Reuse downloads between runs
+- 🌐 **Format support** - Output as M4A, MP3, or WAV
+- 🔐 **Age-restricted videos** - Cookie support for restricted content
+- 🐍 **Modern Python** - Built with modern tooling and best practices
 
 ## Troubleshooting
 
-| `--csv PATH` | CSV file with jobs | Required |https://www.youtube.com/watch?v=42N62Z5E7-s,00:00:01,00:00:03,avengers_assemble,m4a
+### Common Issues
 
-| Problem | Solution |
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| `yt-dlp not found` | Not installed or not in PATH | Install with `pip install yt-dlp` |
+| `ffmpeg not found` | Not installed or not in PATH | [Install ffmpeg](https://ffmpeg.org/download.html) |
+| "Sign in to confirm your age" | Age-restricted video | Use `--cookies-from-browser chrome` |
+| Empty output file | Invalid time range | Check start/end times are within video duration |
+| "Could not copy cookie database" | Browser is running | Close ALL browser windows and try again |
 
-|---------|----------|| `--format {m4a,mp3,wav}` | Default output format | `m4a` |https://www.youtube.com/watch?v=42N62Z5E7-s,00:00:03,00:00:05,thanos-like_to_lose,m4a
+### Cookie Issues (Age-restricted videos)
 
-| `yt-dlp not found` | Install with `uv add yt-dlp` or system package manager |
+**Problem**: `Could not copy Chrome cookie database` or similar errors.
 
-| `ffmpeg not found` | Install ffmpeg and add to PATH || `--precise` | Frame-accurate cuts (slower) | Fast copy |```
+**Solutions** (try in order):
+1. **Close ALL browser windows** completely and try again
+2. Try a different browser: `--cookies-from-browser firefox`
+3. Export cookies manually:
+   - Install browser extension like "Get cookies.txt"
+   - Export cookies for youtube.com to `cookies.txt`
+   - Use: `asa --csv snippets.csv --cookies cookies.txt`
 
-| Cookie database error | Close browser completely, try different browser, or use cookie file |
+**Why this happens**: Browsers lock their cookie databases while running. The script can't read them when the browser is open.
 
-| Permission errors | Check file permissions, run with appropriate user rights || `--outdir DIR` | Output directory | `snippets` |
+### Getting Help
 
+```bash
+# Show all available options
+asa --help
 
-
-### Age-Restricted Videos| `--tempdir DIR` | Cache directory | `downloads` |> Tip: You can copy a watch URL and tweak timestamps by scrubbing in the YouTube player and using the "Copy debug info" time or just manual entry.
-
-
-
-When encountering "Sign in to confirm your age" errors:| `--cookies-from-browser BROWSER` | Browser cookies for age-restricted videos | None |
-
-
-
-1. **Close browser completely** and retry with `--cookies-from-browser chrome`| `--cookies PATH` | Cookie file for age-restricted videos | None |---
-
-2. **Try different browser**: `--cookies-from-browser firefox`
-
-3. **Export cookies manually**:## Command Reference
-
-   - Install browser extension like "Get cookies.txt LOCALLY"
-
-   - Export YouTube cookies to `cookies.txt`### Examples
-
-   - Use `--cookies cookies.txt`
-
-| Option | Purpose |
+# Check version
+asa --version
+```
 
 ## Project Structure
 
-```bash|--------|---------|
-
 ```
-
-audio_snippet_automation/# Basic usage| `--csv PATH` | (Required) Path to CSV file |
-
+audio_snippet_automation/
 ├── src/
-
-│   └── audio_snippet_automation/uv run asa --csv my-clips.csv| `--format m4a|mp3|wav` | Default output format when a row omits the `format` column |
-
-│       ├── __init__.py
-
-│       ├── cli.py           # Command-line interface| `--precise` | Re-encode for frame-accurate cuts (slower, quality maintained) |
-
-│       └── core.py          # Core functionality
-
-├── tests/# Custom output format and directories| `--outdir DIR` | Where final snippets are written (default `snippets`) |
-
-│   ├── __init__.py
-
-│   └── test_core.pyuv run asa --csv clips.csv --format mp3 --outdir my-snippets| `--tempdir DIR` | Where source downloads are cached (default `downloads`) |
-
-├── examples/
-
-│   └── snippets.csv         # Example CSV file| `--cookies-from-browser BROWSER` | Extract cookies from browser for age-restricted videos (chrome, firefox, safari, etc.) |
-
-├── docs/                    # Documentation
-
-├── pyproject.toml          # Project configuration# Precise cuts (re-encode for accuracy)
-
-├── README.md
-
-└── .gitignoreuv run asa --csv clips.csv --precise### Example (matches repo data)
-
-```
-
-```powershell
-
-## License
-
-# Age-restricted videos (browser cookies)python batch_audio_snippets.py --csv .\snippets.csv --format m4a --outdir .\snippets --tempdir .\downloads
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-uv run asa --csv clips.csv --cookies-from-browser chrome```
-
-## Contributing
-
-
-
-1. Fork the repository
-
-2. Create a feature branch# Age-restricted videos (cookie file)### Producing MP3 instead
-
-3. Make your changes
-
-4. Add tests if applicableuv run asa --csv clips.csv --cookies cookies.txt```powershell
-
-5. Run the test suite
-
-6. Submit a pull request```python batch_audio_snippets.py --csv .\snippets.csv --format mp3
-
-
-
-## Acknowledgments```
-
-
-
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube downloader## Development
-
-- [FFmpeg](https://ffmpeg.org/) - Audio/video processing
-
-- [uv](https://github.com/astral-sh/uv) - Modern Python package manager### Frame-accurate cuts (use if edges are off)
-
-### Setup Development Environment```powershell
-
-python batch_audio_snippets.py --csv .\snippets.csv --precise
-
-```bash```
-
-# Clone and setup
-
-git clone https://github.com/L3GJ0N/audio_snippet_automation.git### Age-restricted videos (requires browser cookies)
-
-cd audio_snippet_automation```powershell
-
-python batch_audio_snippets.py --csv .\snippets.csv --cookies-from-browser chrome
-
-# Install with dev dependencies```
-
-uv sync --extra dev
-
----
-
-# Install pre-commit hooks## How It Works
-
-uv run pre-commit install1. Reads each CSV row
-
-```2. Fetches the video ID (`yt-dlp --get-id`)
-
-3. Downloads best audio (cached in `downloads/`)
-
-### Running Tests4. Cuts with `ffmpeg` (fast stream copy or precise re-encode)
-
-5. Converts / renames to desired format
-
-```bash
-
-# Run all testsRe-running with the same CSV is fast because existing downloads are reused.
-
-uv run pytest
-
----
-
-# Run with coverage## Troubleshooting
-
-uv run pytest --cov
-
-| Problem | Cause | Fix |
-
-# Run specific test|---------|-------|-----|
-
-uv run pytest tests/test_core.py::test_time_str| URL reported “not a valid URL” | Quotes were passed literally (older version) | Use updated script (argument list, no shell quoting) |
-
-```| `yt-dlp` not found | Not installed / PATH issue | `pip install yt-dlp` ; check `yt-dlp --version` |
-
-| `ffmpeg` not found | Not installed / PATH issue | Install via Scoop/Choco or add to PATH |
-
-### Code Quality| Empty output file | Cut range too short or outside duration | Verify start/end within video length |
-
-| Slight time inaccuracy | Container keyframe boundaries | Use `--precise` |
-
-```bash
-
-# Format codeLog lines beginning with `[CMD]` show the exact tool invocations.
-
-uv run black .
-
----
-
-# Lint code## FAQ
-
-uv run ruff check .**Q: Will it download playlists?**  No, `--no-playlist` is enforced.
-
-
-
-# Type checking (if mypy is added)**Q: Can I mix formats per row?**  Yes—add the `format` column value.
-
-uv run mypy src/
-
-```**Q: How do I get milliseconds?**  Use `HH:MM:SS.mmm` (e.g., `00:01:12.350`).
-
-
-
-## Troubleshooting**Q: Can I keep original full audio?**  It’s cached already in `downloads/` as M4A.
-
-
-
-| Problem | Solution |---
-
-|---------|----------|## Development Notes
-
-| `yt-dlp not found` | Install with `uv add yt-dlp` or system package manager |Python standard library only. No external dependencies besides `yt-dlp` & `ffmpeg` executables.
-
-| `ffmpeg not found` | Install ffmpeg and add to PATH |
-
-| Cookie database error | Close browser completely, try different browser, or use cookie file |### Pre-commit Hooks (Black formatting)
-
-| Permission errors | Check file permissions, run with appropriate user rights |This repo can automatically format code before each commit using [pre-commit] and Black.
-
-
-
-### Age-Restricted VideosSetup (once):
-
-```powershell
-
-When encountering "Sign in to confirm your age" errors:pip install -r requirements-dev.txt
-
-pre-commit install
-
-1. **Close browser completely** and retry with `--cookies-from-browser chrome````
-
-2. **Try different browser**: `--cookies-from-browser firefox`
-
-3. **Export cookies manually**:Run hooks on all files manually:
-
-   - Install browser extension like "Get cookies.txt LOCALLY"```powershell
-
-   - Export YouTube cookies to `cookies.txt`pre-commit run --all-files
-
-   - Use `--cookies cookies.txt````
-
-
-
-## Project StructureUpdate hook versions later:
-
-```powershell
-
-```pre-commit autoupdate
-
-audio_snippet_automation/git add .pre-commit-config.yaml
-
-├── src/```
-
 │   └── audio_snippet_automation/
-
-│       ├── __init__.pyIf a commit is blocked, fix/accept Black changes, then:
-
-│       ├── cli.py           # Command-line interface```powershell
-
-│       └── core.py          # Core functionalitygit add .
-
-├── tests/git commit -m "Your message"
-
-│   ├── __init__.py```
-
+│       ├── __init__.py
+│       ├── cli.py              # Command-line interface
+│       └── core.py             # Core audio processing logic
+├── tests/
+│   ├── __init__.py
 │   └── test_core.py
-
 ├── examples/
-
-│   └── snippets.csv         # Example CSV file
-├── docs/                    # Documentation
-├── pyproject.toml          # Project configuration
+│   └── snippets.csv            # Example CSV file
+├── docs/                       # Documentation
+├── pyproject.toml             # Project configuration
 ├── README.md
 └── .gitignore
+```
+
+## Development
+
+### Setting Up Development Environment
+
+```bash
+# Clone and enter the repository
+git clone https://github.com/L3GJ0N/audio_snippet_automation.git
+cd audio_snippet_automation
+
+# Install with development dependencies
+uv sync --extra dev
+
+# Install pre-commit hooks
+uv run pre-commit install
+
+# Run tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=audio_snippet_automation
+```
+
+### Code Quality
+
+This project uses modern Python tooling:
+
+- **uv** - Fast Python package manager
+- **black** - Code formatting
+- **ruff** - Linting and import sorting
+- **pre-commit** - Git hooks for code quality
+- **pytest** - Testing framework
+
+```bash
+# Format code
+uv run black .
+
+# Lint code
+uv run ruff check .
+
+# Run all pre-commit hooks
+uv run pre-commit run --all-files
 ```
 
 ## License
@@ -595,8 +258,9 @@ This project is licensed under the MIT License. See the LICENSE file for details
 2. Create a feature branch
 3. Make your changes
 4. Add tests if applicable
-5. Run the test suite
-6. Submit a pull request
+5. Run the test suite: `uv run pytest`
+6. Ensure code quality: `uv run pre-commit run --all-files`
+7. Submit a pull request
 
 ## Acknowledgments
 
