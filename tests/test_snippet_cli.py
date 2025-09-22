@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 import pytest
+
 from audio_snippet_automation.snippet_cli import main
 
 
