@@ -279,13 +279,17 @@ audio_snippet_automation/
 ├── src/
 │   └── audio_snippet_automation/
 │       ├── __init__.py
-│       ├── cli.py              # Command-line interface
-│       └── core.py             # Core audio processing logic
+│       ├── snippet_cli.py      # Audio snippet automation CLI
+│       ├── soundboard_cli.py   # Virtual DJ soundboard CLI
+│       ├── soundboard.py       # Soundboard backend
+│       ├── core.py             # Core audio processing logic
+│       └── templates/          # Web interface templates
 ├── tests/
 │   ├── __init__.py
 │   └── test_core.py
 ├── examples/
-│   └── snippets.csv            # Example CSV file
+│   ├── snippets.csv            # Example CSV file
+│   └── soundboard.json         # Example soundboard config
 ├── docs/                       # Documentation
 ├── pyproject.toml             # Project configuration
 ├── README.md

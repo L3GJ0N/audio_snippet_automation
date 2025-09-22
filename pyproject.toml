@@ -48,8 +48,8 @@ Repository = "https://github.com/L3GJ0N/audio_snippet_automation"
 Issues = "https://github.com/L3GJ0N/audio_snippet_automation/issues"
 
 [project.scripts]
-audio-snippet-automation = "audio_snippet_automation.cli:main"
-asa = "audio_snippet_automation.cli:main"
+audio-snippet-automation = "audio_snippet_automation.snippet_cli:main"
+asa = "audio_snippet_automation.snippet_cli:main"
 asa-soundboard = "audio_snippet_automation.soundboard_cli:main"
 
 [tool.hatch.build.targets.wheel]
