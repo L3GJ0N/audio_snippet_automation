@@ -38,6 +38,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "ruff>=0.1.0",
+    "twine>=4.0.0",
 ]
 
 [project.urls]
@@ -66,7 +67,7 @@ include = [
 # Black formatting
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
