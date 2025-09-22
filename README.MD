@@ -149,6 +149,75 @@ You can specify times in multiple formats:
 - 🔐 **Age-restricted videos** - Cookie support for restricted content
 - 🐍 **Modern Python** - Built with modern tooling and best practices
 
+## 🎚️ Virtual DJ Soundboard
+
+Once you've created your audio snippets, use the included **Virtual DJ Soundboard** to play them instantly with a customizable button grid!
+
+### Quick Start
+
+```bash
+# Create example soundboard configuration
+asa-soundboard --create-example my_soundboard.json
+
+# Edit the JSON file to point to your audio files
+# Then launch the soundboard
+asa-soundboard --config my_soundboard.json
+```
+
+### Soundboard Features
+
+- 🎛️ **Customizable Grid** - Define any NxM button layout
+- 🌐 **Web Interface** - Cross-platform browser-based UI
+- 🎵 **Simultaneous Playbook** - Play multiple sounds at once
+- ⚡ **Instant Response** - Low-latency audio playback
+- 🎨 **Visual Feedback** - Button animations and status indicators
+- ⌨️ **Keyboard Shortcuts** - Space/Escape to stop all sounds
+- 🎚️ **Audio Formats** - Supports WAV, MP3, and OGG files
+
+**Note**: M4A files need to be converted to supported formats. Use:
+```bash
+ffmpeg -i input.m4a output.wav
+```
+
+### Configuration Format
+
+Create a JSON file with your button layout:
+
+```json
+{
+  "layout": {
+    "rows": 4,
+    "cols": 6
+  },
+  "buttons": [
+    {
+      "file": "path/to/your/snippet.m4a",
+      "row": 1,
+      "col": 1,
+      "label": "Button Label"
+    }
+  ]
+}
+```
+
+### Soundboard Usage
+
+```bash
+# Basic usage
+asa-soundboard --config soundboard.json
+
+# Custom host/port
+asa-soundboard --config sounds.json --host 0.0.0.0 --port 8080
+
+# Don't auto-open browser
+asa-soundboard --config sounds.json --no-browser
+
+# Enable debug mode
+asa-soundboard --config sounds.json --debug --verbose
+```
+
+The soundboard will open in your browser with a beautiful grid interface where you can click buttons to play your audio snippets instantly!
+
 ## Troubleshooting
 
 ### Common Issues
