@@ -29,6 +29,8 @@ keywords = ["youtube", "audio", "ffmpeg", "yt-dlp", "snippets", "batch"]
 requires-python = ">=3.9"
 dependencies = [
     "yt-dlp>=2024.1.0",
+    "flask>=3.0.0",
+    "pygame>=2.5.0",
 ]
 
 [project.optional-dependencies]
@@ -48,6 +50,7 @@ Issues = "https://github.com/L3GJ0N/audio_snippet_automation/issues"
 [project.scripts]
 audio-snippet-automation = "audio_snippet_automation.cli:main"
 asa = "audio_snippet_automation.cli:main"
+asa-soundboard = "audio_snippet_automation.soundboard_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/audio_snippet_automation"]
