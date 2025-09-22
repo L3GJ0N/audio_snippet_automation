@@ -1,9 +1,21 @@
 {
   "layout": {
-    "rows": 4,
+    "rows": 5,
     "cols": 6
   },
   "buttons": [
+    {
+      "file": "C:\\Users\\domin\\workspace\\audio_snippet_automation\\snippets\\nicholson-you_cant_handle_the_truth.wav",
+      "row": 1,
+      "col": 1,
+      "label": "You can't handle the truth!"
+    },
+    {
+      "file": "C:\\Users\\domin\\workspace\\audio_snippet_automation\\snippets\\dp_206_bones.m4a",
+      "row": 1,
+      "col": 1,
+      "label": "You can't handle the truth!"
+    },
     {
       "file": "C:\\Users\\domin\\workspace\\audio_snippet_automation\\snippets\\nicholson-you_cant_handle_the_truth.wav",
       "row": 1,

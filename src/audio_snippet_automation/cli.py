@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import json
 import sys
 from pathlib import Path
 
@@ -52,16 +53,79 @@ def create_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Path to cookies.txt file for age-restricted videos",
     )
+    parser.add_argument(
+        "--soundboard-ready",
+        action="store_true",
+        help="Convert all outputs to WAV format and generate soundboard config (overrides --format)",
+    )
+    parser.add_argument(
+        "--generate-soundboard-config",
+        type=Path,
+        help="Generate a soundboard JSON configuration file for the created snippets",
+    )
+    parser.add_argument(
+        "--soundboard-layout",
+        nargs=2,
+        type=int,
+        metavar=("ROWS", "COLS"),
+        default=[4, 6],
+        help="Grid layout for soundboard config (rows cols, default: 4 6)",
+    )
     return parser
 
 
-def process_csv_row(row: dict, row_num: int, args: argparse.Namespace) -> None:
+def generate_soundboard_config(
+    snippet_files: list[dict], layout: tuple[int, int], config_path: Path
+) -> None:
+    """Generate a soundboard configuration file from created snippets."""
+    rows, cols = layout
+    max_buttons = rows * cols
+
+    # Limit to grid size
+    if len(snippet_files) > max_buttons:
+        print(
+            f"[WARN] Too many snippets ({len(snippet_files)}) for {rows}x{cols} grid. Using first {max_buttons}."
+        )
+        snippet_files = snippet_files[:max_buttons]
+
+    # Create configuration
+    config = {"layout": {"rows": rows, "cols": cols}, "buttons": []}
+
+    # Auto-arrange buttons in grid
+    for i, snippet in enumerate(snippet_files):
+        row = (i // cols) + 1
+        col = (i % cols) + 1
+
+        button = {
+            "file": str(snippet["path"].absolute()),
+            "row": row,
+            "col": col,
+            "label": snippet["label"],
+        }
+        config["buttons"].append(button)
+
+    # Write configuration
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
+
+    print(f"[INFO] Generated soundboard config: {config_path}")
+    print(f"[INFO] Layout: {rows}x{cols} with {len(snippet_files)} buttons")
+
+
+def process_csv_row(
+    row: dict, row_num: int, args: argparse.Namespace, snippet_files: list[dict] = None
+) -> None:
     """Process a single CSV row."""
     url = (row.get("url") or "").strip()
     start = time_str(row.get("start") or "")
     end = time_str(row.get("end") or "")
     out_base = (row.get("output") or "").strip()
     fmt = (row.get("format") or "").strip().lower() or args.format
+
+    # Override format if soundboard-ready flag is set
+    if args.soundboard_ready:
+        fmt = "wav"
+        print(f"[INFO] Soundboard mode: Using WAV format for {out_base or 'snippet'}")
 
     if not url or not start or not end:
         print(f"[WARN] Row {row_num} missing url/start/end. Skipping.")
@@ -90,6 +154,16 @@ def process_csv_row(row: dict, row_num: int, args: argparse.Namespace) -> None:
 
     print(f"[OK] Wrote {final_path}")
 
+    # Track snippet for soundboard config generation
+    if snippet_files is not None:
+        # Create a nice label from the output name
+        label = out_base.replace("_", " ").replace("-", " ").title()
+        # Limit label length for UI
+        if len(label) > 25:
+            label = label[:22] + "..."
+
+        snippet_files.append({"path": final_path, "label": label, "output": out_base})
+
 
 def main() -> None:
     """Main entry point."""
@@ -104,6 +178,12 @@ def main() -> None:
         args.outdir.mkdir(exist_ok=True)
         args.tempdir.mkdir(exist_ok=True)
 
+        # Initialize snippet tracking for soundboard config
+        snippet_files = []
+        should_generate_config = (
+            args.soundboard_ready or args.generate_soundboard_config
+        )
+
         # Process CSV
         with open(args.csv, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -111,7 +191,9 @@ def main() -> None:
 
             for i, row in enumerate(reader, 1):
                 try:
-                    process_csv_row(row, i, args)
+                    process_csv_row(
+                        row, i, args, snippet_files if should_generate_config else None
+                    )
                 except AudioSnippetError as e:
                     print(f"[ERROR] Row {i}: {e}")
                     continue
@@ -120,6 +202,19 @@ def main() -> None:
                     sys.exit(130)
 
         print("[DONE] All jobs processed.")
+
+        # Generate soundboard configuration if requested
+        if should_generate_config and snippet_files:
+            config_path = args.generate_soundboard_config or (
+                args.outdir / "soundboard.json"
+            )
+            layout = tuple(args.soundboard_layout)
+            generate_soundboard_config(snippet_files, layout, config_path)
+
+            if args.soundboard_ready:
+                print(
+                    f"[INFO] Soundboard ready! Launch with: asa-soundboard --config {config_path}"
+                )
 
     except AudioSnippetError as e:
         print(f"[ERROR] {e}", file=sys.stderr)
