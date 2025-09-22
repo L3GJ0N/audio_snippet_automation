@@ -6,8 +6,8 @@ build-backend = "hatchling.build"
 name = "audio-snippet-automation"
 version = "0.2.0"
 description = "Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file"
-readme = "README.md"
-license = "MIT"
+readme = "README.MD"
+license = {text = "MIT"}
 authors = [
     { name = "Your Name", email = "your.email@example.com" }
 ]
@@ -18,15 +18,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Utilities",
 ]
 keywords = ["youtube", "audio", "ffmpeg", "yt-dlp", "snippets", "batch"]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "yt-dlp>=2024.1.0",
     "flask>=3.0.0",
@@ -40,6 +38,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "ruff>=0.1.0",
+    "twine>=4.0.0",
 ]
 
 [project.urls]
@@ -61,14 +60,14 @@ include = [
     "tests/",
     "examples/",
     "docs/",
-    "README.md",
+    "README.MD",
     "LICENSE",
 ]
 
 # Black formatting
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -86,7 +85,7 @@ extend-exclude = '''
 
 # Ruff linting
 [tool.ruff]
-target-version = "py39"
+target-version = "py312"
 line-length = 88
 
 [tool.ruff.lint]
@@ -104,6 +103,10 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["audio_snippet_automation"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]

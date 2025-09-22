@@ -292,7 +292,7 @@ audio_snippet_automation/
 │   └── soundboard.json         # Example soundboard config
 ├── docs/                       # Documentation
 ├── pyproject.toml             # Project configuration
-├── README.md
+├── README.MD
 └── .gitignore
 ```
 

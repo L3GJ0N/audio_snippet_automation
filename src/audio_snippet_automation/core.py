@@ -5,7 +5,6 @@ import os
 import subprocess
 from pathlib import Path
 from shutil import which
-from typing import Optional
 
 
 class AudioSnippetError(Exception):
@@ -43,7 +42,7 @@ def _log_cmd(args: list[str]) -> None:
     print("[CMD] " + " ".join(_quote_arg(str(a)) for a in args))
 
 
-def run_command(args: list[str], cwd: Optional[Path] = None) -> None:
+def run_command(args: list[str], cwd: Path | None = None) -> None:
     """Run a command and exit on failure."""
     _log_cmd(args)
     proc = subprocess.run(args, cwd=cwd)
@@ -64,8 +63,8 @@ def run_command_output(args: list[str]) -> str:
 
 def run_with_cookie_fallback(
     args_list: list[str],
-    cookie_browser: Optional[str],
-    cookie_file: Optional[str],
+    cookie_browser: str | None,
+    cookie_file: str | None,
     url: str,
 ) -> str:
     """Run yt-dlp command with cookie fallback on failure."""
@@ -128,7 +127,7 @@ def validate_csv_format(reader: csv.DictReader) -> None:
 
 
 def get_video_id(
-    url: str, cookie_browser: Optional[str] = None, cookie_file: Optional[str] = None
+    url: str, cookie_browser: str | None = None, cookie_file: str | None = None
 ) -> str:
     """Get YouTube video ID from URL."""
     get_id_args = ["yt-dlp", "--no-playlist", "--get-id"]
@@ -139,8 +138,8 @@ def download_audio(
     url: str,
     video_id: str,
     temp_dir: Path,
-    cookie_browser: Optional[str] = None,
-    cookie_file: Optional[str] = None,
+    cookie_browser: str | None = None,
+    cookie_file: str | None = None,
 ) -> Path:
     """Download audio from YouTube URL."""
     temp_audio = temp_dir / f"{video_id}.m4a"
