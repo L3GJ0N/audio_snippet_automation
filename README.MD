@@ -15,6 +15,24 @@ This tool automates the process of creating audio snippets from YouTube videos. 
 
 Perfect for creating sound effects, voice clips, music samples, or any audio content from YouTube videos.
 
+## ⚠️ Legal Notice & Responsible Use
+
+**This tool is for educational and personal use only.** Users are solely responsible for:
+
+- ✅ **Complying with YouTube's Terms of Service** - Review YouTube's current ToS before use
+- ✅ **Respecting copyright laws** - Ensure you have rights to use the content you download
+- ✅ **Obtaining proper permissions** - Get authorization for copyrighted material when required
+- ✅ **Following local laws** - Copyright laws vary by jurisdiction
+- ✅ **Using only authorized content** - Content you own, have licensed, or is in the public domain
+
+**Examples of appropriate use:**
+- Your own uploaded videos
+- Creative Commons or public domain content
+- Educational content where fair use applies (varies by jurisdiction)
+- Content you have explicit permission to use
+
+**The developers provide this tool "as-is" and are not responsible for any misuse, copyright violations, or legal issues arising from its use.** By using this software, you acknowledge that you understand these responsibilities and agree to use it legally and ethically.
+
 ## How It Works
 
 The tool reads a CSV file where each row defines:
