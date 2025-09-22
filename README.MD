@@ -2,7 +2,7 @@
 
 Create multiple precisely trimmed audio snippets from YouTube URLs using a simple CSV file.
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## What Does This Do?
@@ -54,7 +54,7 @@ https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handl
 ### Prerequisites
 You need these installed on your system:
 
-1. **Python 3.9 or newer** - [Download here](https://www.python.org/downloads/)
+1. **Python 3.12 or newer** - [Download here](https://www.python.org/downloads/)
 2. **uv package manager** - [Installation guide](https://docs.astral.sh/uv/getting-started/installation/)
 3. **ffmpeg** - [Download here](https://ffmpeg.org/download.html)
 
