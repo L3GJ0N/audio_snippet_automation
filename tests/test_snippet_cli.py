@@ -3,7 +3,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from audio_snippet_automation.snippet_cli import main
 
 
@@ -107,7 +106,17 @@ class TestSnippetCLI:
         csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
         valid_csv.write_text(csv_content)
 
-        with patch("audio_snippet_automation.snippet_cli.process_csv_row"):
+        # Mock snippet creation so config generation is triggered
+        def mock_process_csv_row(row, row_num, args, snippet_files):
+            if snippet_files is not None:
+                snippet_files.append(
+                    {"path": tmp_path / "test.wav", "label": "Test", "output": "test"}
+                )
+
+        with patch(
+            "audio_snippet_automation.snippet_cli.process_csv_row",
+            side_effect=mock_process_csv_row,
+        ):
             with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
                 with patch(
                     "audio_snippet_automation.snippet_cli.generate_soundboard_config"
@@ -136,7 +145,17 @@ class TestSnippetCLI:
         csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
         valid_csv.write_text(csv_content)
 
-        with patch("audio_snippet_automation.snippet_cli.process_csv_row"):
+        # Mock snippet creation so config generation is triggered
+        def mock_process_csv_row(row, row_num, args, snippet_files):
+            if snippet_files is not None:
+                snippet_files.append(
+                    {"path": tmp_path / "test.wav", "label": "Test", "output": "test"}
+                )
+
+        with patch(
+            "audio_snippet_automation.snippet_cli.process_csv_row",
+            side_effect=mock_process_csv_row,
+        ):
             with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
                 with patch(
                     "audio_snippet_automation.snippet_cli.generate_soundboard_config"
