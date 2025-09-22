@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        type: string
+
+jobs:
+  build-and-publish:
+    name: Build and Publish to PyPI
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write  # Required for trusted publishing
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Update version if manually triggered
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        # Update version in pyproject.toml
+        sed -i 's/version = ".*"/version = "${{ github.event.inputs.version }}"/' pyproject.toml
+
+    - name: Build package
+      run: |
+        uv build
+
+    - name: Verify package
+      run: |
+        uv run pip install twine
+        uv run twine check dist/*
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        # Using trusted publishing - no API token needed
+        # Make sure to configure this in PyPI project settings
+        verbose: true
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        release_name: Release ${{ github.event.inputs.version }}
+        body: |
+          ## Changes in this Release
+
+          <!-- Add release notes here -->
+
+          ## Installation
+
+          ```bash
+          pip install audio-snippet-automation==${{ github.event.inputs.version }}
+          ```
+
+          Or with uv:
+
+          ```bash
+          uv add audio-snippet-automation==${{ github.event.inputs.version }}
+          ```
+        draft: false
+        prerelease: false

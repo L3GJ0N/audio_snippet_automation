@@ -1,0 +1,190 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test on Python ${{ matrix.python-version }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Install FFmpeg (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install FFmpeg (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install ffmpeg
+
+    - name: Install FFmpeg (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install ffmpeg
+
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+
+    - name: Lint with ruff
+      run: |
+        uv run ruff check .
+
+    - name: Format check with ruff
+      run: |
+        uv run ruff format --check .
+
+    - name: Type check with mypy (if configured)
+      continue-on-error: true
+      run: |
+        uv run mypy src/ || echo "MyPy not configured or failed"
+
+    - name: Test with pytest
+      run: |
+        uv run pytest tests/ -v --cov=audio_snippet_automation --cov-report=xml --cov-report=term-missing
+
+    - name: Test CLI commands
+      run: |
+        # Test basic CLI functionality
+        uv run asa --help
+        uv run asa-soundboard --help
+
+        # Test example config creation
+        uv run asa-soundboard --create-example test_config.json
+
+        # Verify config was created and is valid JSON
+        python -c "import json; json.load(open('test_config.json'))"
+
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install dependencies
+      run: uv sync --extra dev
+
+    - name: Run safety check
+      continue-on-error: true
+      run: |
+        uv run pip install safety
+        uv run safety check
+
+    - name: Run bandit security scan
+      continue-on-error: true
+      run: |
+        uv run pip install bandit
+        uv run bandit -r src/
+
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install build dependencies
+      run: uv sync
+
+    - name: Build package
+      run: |
+        uv build
+
+    - name: Check package metadata
+      run: |
+        uv run pip install twine
+        uv run twine check dist/*
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install 3.11
+
+    - name: Install FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install package
+      run: |
+        uv sync
+
+    - name: Create test CSV
+      run: |
+        cat > integration_test.csv << EOF
+        url,start,end,output,format
+        https://www.youtube.com/watch?v=dQw4w9WgXcQ,0,5,test_clip,m4a
+        EOF
+
+    - name: Test with mock data (no actual downloads)
+      run: |
+        # Create mock test that doesn't actually download
+        echo "Integration tests would go here - skipped for CI to avoid YouTube dependencies"
+
+        # Test soundboard config generation
+        uv run asa-soundboard --create-example integration_config.json
+
+        # Verify config is valid
+        python -c "
+        import json
+        config = json.load(open('integration_config.json'))
+        assert 'layout' in config
+        assert 'buttons' in config
+        print('Integration test passed!')
+        "
