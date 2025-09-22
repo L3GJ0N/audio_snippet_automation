@@ -7,7 +7,7 @@ name = "audio-snippet-automation"
 version = "0.2.0"
 description = "Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file"
 readme = "README.MD"
-license = "MIT"
+license = {file = "LICENSE"}
 authors = [
     { name = "Your Name", email = "your.email@example.com" }
 ]
