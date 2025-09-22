@@ -18,15 +18,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Utilities",
 ]
 keywords = ["youtube", "audio", "ffmpeg", "yt-dlp", "snippets", "batch"]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "yt-dlp>=2024.1.0",
     "flask>=3.0.0",
