@@ -17,8 +17,11 @@ def calculate_optimal_grid(num_files: int) -> tuple[int, int]:
     """
     Calculate the optimal grid dimensions for the given number of files.
 
-    Prioritizes more rows over columns (taller rather than wider layout).
-    If the number doesn't fit perfectly, uses the next larger grid.
+    Creates aesthetically pleasing grids with these criteria:
+    - rows >= cols (slightly taller than wide)
+    - rows - cols <= 2 (not too tall)
+    - rows * cols >= num_files (fits all files)
+    - Minimal total slots (rows * cols as small as possible)
 
     Args:
         num_files: Number of audio files to arrange
@@ -27,36 +30,35 @@ def calculate_optimal_grid(num_files: int) -> tuple[int, int]:
         Tuple of (rows, cols) for the grid layout
 
     Examples:
-        6 files -> (3, 2)  # 3 rows, 2 cols
-        9 files -> (3, 3)  # 3 rows, 3 cols
-        28 files -> (7, 4) # 7 rows, 4 cols (28 total slots)
+        6 files -> (3, 2)  # 3 rows, 2 cols = 6 slots
+        9 files -> (3, 3)  # 3 rows, 3 cols = 9 slots
+        28 files -> (6, 5) # 6 rows, 5 cols = 30 slots (2 empty)
     """
     if num_files == 0:
         return (1, 1)
     if num_files == 1:
         return (1, 1)
 
-    # Find factors of num_files and factors that create minimal empty slots
-    best_rows, best_cols = num_files, 1  # Fallback: single column
-    min_empty_slots = float("inf")
+    best_rows, best_cols = num_files, 1  # Fallback
+    min_total_slots = float("inf")
 
-    # Try different column counts from 1 to sqrt(num_files) + some buffer
-    max_cols = min(num_files, int(math.sqrt(num_files)) + 3)
+    # Start from square root and work outwards
+    sqrt_files = math.sqrt(num_files)
+    max_search = int(sqrt_files) + 5  # Search a bit beyond sqrt
 
-    for cols in range(1, max_cols + 1):
-        rows = math.ceil(num_files / cols)
-        total_slots = rows * cols
-        empty_slots = total_slots - num_files
+    for cols in range(1, max_search + 1):
+        for rows in range(cols, cols + 3):  # rows can be up to cols + 2
+            total_slots = rows * cols
 
-        # Prefer arrangements with:
-        # 1. Fewer empty slots
-        # 2. More rows than columns (rows >= cols)
-        # 3. More reasonable aspect ratios (not too tall/wide)
-        if (
-            empty_slots < min_empty_slots and rows >= cols and rows / cols <= 3
-        ):  # Don't make it more than 3x taller than wide
-            best_rows, best_cols = rows, cols
-            min_empty_slots = empty_slots
+            # Check if this grid satisfies all criteria
+            if (
+                rows >= cols  # Criterion 1: rows >= cols
+                and rows - cols <= 2  # Criterion 2: not too tall
+                and total_slots >= num_files  # Criterion 3: fits all files
+                and total_slots < min_total_slots  # Criterion 4: minimal slots
+            ):
+                best_rows, best_cols = rows, cols
+                min_total_slots = total_slots
 
     return (best_rows, best_cols)
 

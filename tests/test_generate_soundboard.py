@@ -31,8 +31,8 @@ class TestCalculateOptimalGrid:
         assert calculate_optimal_grid(9) == (3, 3)
         assert calculate_optimal_grid(16) == (4, 4)
         assert calculate_optimal_grid(25) == (5, 5)
-        # Note: 36 gets (9, 4) because algorithm prefers rows >= cols
-        assert calculate_optimal_grid(36) == (9, 4)
+        # New aesthetic algorithm produces square layout for 36 files
+        assert calculate_optimal_grid(36) == (6, 6)
 
     def test_small_numbers(self):
         """Test grid calculation for small numbers of files."""
@@ -45,16 +45,16 @@ class TestCalculateOptimalGrid:
 
     def test_medium_numbers(self):
         """Test grid calculation for medium numbers of files."""
-        assert calculate_optimal_grid(10) == (5, 2)  # 5 rows, 2 cols = 10 slots
-        assert calculate_optimal_grid(12) == (6, 2)  # 6 rows, 2 cols = 12 slots
+        assert calculate_optimal_grid(10) == (4, 3)  # 4 rows, 3 cols = 12 slots
+        assert calculate_optimal_grid(12) == (4, 3)  # 4 rows, 3 cols = 12 slots
         assert calculate_optimal_grid(15) == (5, 3)  # 5 rows, 3 cols = 15 slots
-        assert calculate_optimal_grid(18) == (6, 3)  # 6 rows, 3 cols = 18 slots
+        assert calculate_optimal_grid(18) == (5, 4)  # 5 rows, 4 cols = 20 slots
         assert calculate_optimal_grid(20) == (5, 4)  # 5 rows, 4 cols = 20 slots
 
     def test_larger_numbers(self):
         """Test grid calculation for larger numbers of files."""
-        assert calculate_optimal_grid(24) == (8, 3)  # 8 rows, 3 cols = 24 slots
-        assert calculate_optimal_grid(28) == (7, 4)  # 7 rows, 4 cols = 28 slots
+        assert calculate_optimal_grid(24) == (6, 4)  # 6 rows, 4 cols = 24 slots
+        assert calculate_optimal_grid(28) == (6, 5)  # 6 rows, 5 cols = 30 slots
         assert calculate_optimal_grid(30) == (6, 5)  # 6 rows, 5 cols = 30 slots
         assert calculate_optimal_grid(35) == (7, 5)  # 7 rows, 5 cols = 35 slots
         assert calculate_optimal_grid(42) == (7, 6)  # 7 rows, 6 cols = 42 slots
@@ -72,22 +72,31 @@ class TestCalculateOptimalGrid:
             # Should prioritize more rows than columns
             assert rows >= cols, f"Grid {rows}×{cols} has more columns than rows"
 
-            # Should not be excessively tall (aspect ratio check)
-            if cols > 1:  # Skip single-column layouts
-                assert (
-                    rows / cols <= 3
-                ), f"Grid {rows}×{cols} is too tall (aspect ratio {rows / cols:.1f})"
+            # Should maintain aesthetic ratio (rows - cols <= 2)
+            assert (
+                rows - cols <= 2
+            ), f"Grid {rows}×{cols} is too tall (difference: {rows - cols})"
 
     def test_minimal_empty_slots(self):
-        """Test that grids minimize empty slots when possible."""
-        # Perfect fits should have zero empty slots
-        perfect_fits = [4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 25, 28, 30, 36]
+        """Test that grids have reasonable empty slots for aesthetic layout."""
+        # These numbers should have perfect fits (0 empty slots)
+        perfect_fits = [4, 6, 8, 9, 12, 15, 16, 20, 24, 25, 30, 36]
         for num_files in perfect_fits:
             rows, cols = calculate_optimal_grid(num_files)
             empty_slots = rows * cols - num_files
             assert (
                 empty_slots == 0
             ), f"{num_files} files should fit perfectly, got {empty_slots} empty slots"
+
+        # These numbers have small acceptable empty slots for aesthetic layout
+        aesthetic_acceptable = [(10, 2), (18, 2), (28, 2)]  # (files, max_empty_slots)
+        for num_files, max_empty in aesthetic_acceptable:
+            rows, cols = calculate_optimal_grid(num_files)
+            empty_slots = rows * cols - num_files
+            assert empty_slots <= max_empty, (
+                f"{num_files} files has {empty_slots} empty slots, "
+                f"expected <= {max_empty} for aesthetic layout"
+            )
 
 
 class TestFindAudioFiles:
