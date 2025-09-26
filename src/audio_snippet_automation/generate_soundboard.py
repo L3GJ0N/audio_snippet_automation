@@ -82,8 +82,10 @@ def find_audio_files(
     audio_files = set()  # Use set to avoid duplicates
 
     for ext in extensions:
-        audio_files.update(folder_path.glob(f"*{ext}"))
-        audio_files.update(folder_path.glob(f"*{ext.upper()}"))
+        # Use case-insensitive matching to catch all variations (.mp3, .MP3, .Mp3, etc.)
+        for file_path in folder_path.iterdir():
+            if file_path.is_file() and file_path.suffix.lower() == ext.lower():
+                audio_files.add(file_path)
 
     # Sort by filename for consistent ordering
     return sorted(audio_files, key=lambda p: p.name.lower())
