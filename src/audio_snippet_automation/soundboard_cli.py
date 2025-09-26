@@ -179,12 +179,12 @@ def main(
 
     except AudioSnippetError as e:
         print(f"Error: {e}", file=sys.stderr)
-        return 1
+        sys.exit(1)
 
     except Exception as e:
         logger.exception("Unexpected error occurred")
         print(f"Unexpected error: {e}", file=sys.stderr)
-        return 1
+        sys.exit(1)
 
 
 if __name__ == "__main__":
