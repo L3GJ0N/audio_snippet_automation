@@ -141,7 +141,7 @@ jobs:
         uv run asa-soundboard --create-example test_config.json
 
         # Verify config was created and is valid JSON
-        python -c "import json; json.load(open('test_config.json'))"
+        uv run python -c "import json; json.load(open('test_config.json'))"
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
