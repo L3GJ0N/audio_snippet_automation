@@ -5,12 +5,13 @@ Command-line interface for the Virtual DJ Soundboard.
 This module provides a CLI to launch the web-based soundboard interface.
 """
 
-import argparse
 import logging
 import sys
 import webbrowser
 from pathlib import Path
 from threading import Timer
+
+import click
 
 from .soundboard import AudioSnippetError, VirtualDJSoundboard, create_example_config
 
@@ -23,73 +24,6 @@ def setup_logging(verbose: bool = False) -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
-
-def create_parser() -> argparse.ArgumentParser:
-    """Create and configure the argument parser."""
-    parser = argparse.ArgumentParser(
-        description="Virtual DJ Soundboard - A customizable grid-based audio playback interface",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s --config soundboard.json
-  %(prog)s --config my_sounds.json --host 0.0.0.0 --port 8080
-  %(prog)s --create-example example.json
-  %(prog)s --config sounds.json --no-browser --verbose
-
-The configuration file should be in JSON format with this structure:
-{
-  "layout": {"rows": 3, "cols": 4},
-  "buttons": [
-    {
-      "file": "path/to/audio.m4a",
-      "row": 1,
-      "col": 1,
-      "label": "Button Label"
-    }
-  ]
-}
-        """,
-    )
-
-    parser.add_argument(
-        "--config", "-c", type=Path, help="Path to JSON configuration file"
-    )
-
-    parser.add_argument(
-        "--host",
-        default="localhost",
-        help="Host to bind the web server (default: localhost)",
-    )
-
-    parser.add_argument(
-        "--port",
-        "-p",
-        type=int,
-        default=8080,
-        help="Port for the web server (default: 8080)",
-    )
-
-    parser.add_argument(
-        "--no-browser", action="store_true", help="Do not automatically open browser"
-    )
-
-    parser.add_argument("--debug", action="store_true", help="Enable Flask debug mode")
-
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
-
-    parser.add_argument(
-        "--create-example",
-        type=Path,
-        metavar="FILENAME",
-        help="Create an example configuration file and exit",
-    )
-
-    parser.add_argument("--version", action="version", version="%(prog)s 0.2.0")
-
-    return parser
 
 
 def open_browser(url: str, delay: float = 1.5) -> None:
@@ -127,56 +61,121 @@ def validate_config_file(config_path: Path) -> None:
         ) from e
 
 
-def main() -> int:
-    """Main entry point for the soundboard CLI."""
-    parser = create_parser()
-    args = parser.parse_args()
+@click.command()
+@click.option(
+    "--config",
+    "-c",
+    type=click.Path(exists=True, path_type=Path),
+    help="Path to JSON configuration file",
+)
+@click.option(
+    "--host",
+    default="localhost",
+    help="Host to bind the web server (default: localhost)",
+)
+@click.option(
+    "--port",
+    "-p",
+    type=int,
+    default=8080,
+    help="Port for the web server (default: 8080)",
+)
+@click.option(
+    "--no-browser",
+    is_flag=True,
+    help="Do not automatically open browser",
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Enable Flask debug mode",
+)
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    help="Enable verbose logging",
+)
+@click.option(
+    "--create-example",
+    type=click.Path(path_type=Path),
+    help="Create an example configuration file and exit",
+)
+@click.version_option(version="0.2.0", prog_name="asa-soundboard")
+def main(
+    config: Path,
+    host: str,
+    port: int,
+    no_browser: bool,
+    debug: bool,
+    verbose: bool,
+    create_example: Path,
+) -> int:
+    """Virtual DJ Soundboard - A customizable grid-based audio playback interface
 
-    setup_logging(args.verbose)
+    Examples:
+      asa-soundboard --config soundboard.json
+      asa-soundboard --config my_sounds.json --host 0.0.0.0 --port 8080
+      asa-soundboard --create-example example.json
+      asa-soundboard --config sounds.json --no-browser --verbose
+
+    The configuration file should be in JSON format with this structure:
+    {
+      "layout": {"rows": 3, "cols": 4},
+      "buttons": [
+        {
+          "file": "path/to/audio.m4a",
+          "row": 1,
+          "col": 1,
+          "label": "Button Label"
+        }
+      ]
+    }
+    """
+    setup_logging(verbose)
     logger = logging.getLogger(__name__)
 
     try:
         # Handle example creation
-        if args.create_example:
-            create_example_config(args.create_example)
-            print(f"Example configuration created: {args.create_example}")
+        if create_example:
+            create_example_config(create_example)
+            print(f"Example configuration created: {create_example}")
             print(
                 "Edit the file to customize your soundboard layout and button assignments."
             )
             return 0
 
         # Validate required arguments
-        if not args.config:
-            print(
-                "Error: --config is required (or use --create-example to get started)"
-            )
-            parser.print_help()
-            return 1
+        if not config:
+            ctx = click.get_current_context()
+            ctx.fail("--config is required (or use --create-example to get started)")
 
         # Validate configuration file
-        validate_config_file(args.config)
+        validate_config_file(config)
 
         # Create and start soundboard
-        logger.info(f"Loading configuration from: {args.config}")
-        soundboard = VirtualDJSoundboard(
-            config_path=args.config, host=args.host, port=args.port
-        )
+        logger.info(f"Loading configuration from: {config}")
+        soundboard = VirtualDJSoundboard(config_path=config, host=host, port=port)
 
         # Open browser unless disabled
-        if not args.no_browser:
-            url = f"http://{args.host}:{args.port}"
+        if not no_browser:
+            url = f"http://{host}:{port}"
             open_browser(url)
         else:
-            print(f"Soundboard available at: http://{args.host}:{args.port}")
+            print(f"Soundboard available at: http://{host}:{port}")
 
         # Start the web server
-        soundboard.run(debug=args.debug)
+        soundboard.run(debug=debug)
 
         return 0
 
     except KeyboardInterrupt:
         logger.info("Shutting down soundboard...")
         return 0
+
+    except click.ClickException:
+        # Re-raise click exceptions to preserve proper exit codes
+        raise
 
     except AudioSnippetError as e:
         print(f"Error: {e}", file=sys.stderr)

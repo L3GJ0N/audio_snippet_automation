@@ -29,6 +29,7 @@ dependencies = [
     "yt-dlp>=2024.1.0",
     "flask>=3.0.0",
     "pygame>=2.5.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
