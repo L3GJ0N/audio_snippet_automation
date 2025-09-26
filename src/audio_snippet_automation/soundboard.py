@@ -283,25 +283,43 @@ class VirtualDJSoundboard:
 def create_example_config(output_path: Path) -> None:
     """Create an example configuration file."""
     example_config = {
-        "layout": {"rows": 3, "cols": 4},
+        "layout": {"rows": 4, "cols": 6},
         "buttons": [
             {
-                "file": "C:\\Users\\domin\\workspace\\audio_snippet_automation\\snippets\\nicholson-you_cant_handle_the_truth.m4a",
+                "file": "snippets/example_clip_1.m4a",
                 "row": 1,
                 "col": 1,
-                "label": "You can't handle the truth!",
+                "label": "Example Sound 1",
             },
             {
-                "file": "C:\\Users\\domin\\workspace\\audio_snippet_automation\\snippets\\fuck_shit_stack.m4a",
+                "file": "snippets/example_clip_2.wav",
                 "row": 1,
                 "col": 2,
-                "label": "F*** S*** Stack",
+                "label": "Example Sound 2",
             },
             {
-                "file": "C:\\Users\\domin\\workspace\\audio_snippet_automation\\snippets\\ww_youre_goddamn_right.m4a",
+                "file": "snippets/my_audio_snippet.m4a",
+                "row": 1,
+                "col": 3,
+                "label": "My Custom Audio",
+            },
+            {
+                "file": "C:/path/to/your/audio/file.wav",
                 "row": 2,
                 "col": 1,
-                "label": "You're goddamn right",
+                "label": "Absolute Path Example",
+            },
+            {
+                "file": "./relative/path/to/audio.mp3",
+                "row": 2,
+                "col": 2,
+                "label": "Relative Path Example",
+            },
+            {
+                "file": "snippets/generated_by_asa.m4a",
+                "row": 2,
+                "col": 3,
+                "label": "Generated Snippet",
             },
         ],
     }

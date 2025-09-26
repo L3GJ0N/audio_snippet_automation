@@ -50,6 +50,7 @@ Issues = "https://github.com/L3GJ0N/audio_snippet_automation/issues"
 audio-snippet-automation = "audio_snippet_automation.snippet_cli:main"
 asa = "audio_snippet_automation.snippet_cli:main"
 asa-soundboard = "audio_snippet_automation.soundboard_cli:main"
+asa-generate-soundboard = "audio_snippet_automation.generate_soundboard:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/audio_snippet_automation"]
