@@ -65,17 +65,17 @@ class TestCalculateOptimalGrid:
             rows, cols = calculate_optimal_grid(num_files)
 
             # Grid should accommodate all files
-            assert (
-                rows * cols >= num_files
-            ), f"Grid {rows}×{cols} too small for {num_files} files"
+            assert rows * cols >= num_files, (
+                f"Grid {rows}×{cols} too small for {num_files} files"
+            )
 
             # Should prioritize more rows than columns
             assert rows >= cols, f"Grid {rows}×{cols} has more columns than rows"
 
             # Should maintain aesthetic ratio (rows - cols <= 2)
-            assert (
-                rows - cols <= 2
-            ), f"Grid {rows}×{cols} is too tall (difference: {rows - cols})"
+            assert rows - cols <= 2, (
+                f"Grid {rows}×{cols} is too tall (difference: {rows - cols})"
+            )
 
     def test_minimal_empty_slots(self):
         """Test that grids have reasonable empty slots for aesthetic layout."""
@@ -84,9 +84,9 @@ class TestCalculateOptimalGrid:
         for num_files in perfect_fits:
             rows, cols = calculate_optimal_grid(num_files)
             empty_slots = rows * cols - num_files
-            assert (
-                empty_slots == 0
-            ), f"{num_files} files should fit perfectly, got {empty_slots} empty slots"
+            assert empty_slots == 0, (
+                f"{num_files} files should fit perfectly, got {empty_slots} empty slots"
+            )
 
         # These numbers have small acceptable empty slots for aesthetic layout
         aesthetic_acceptable = [(10, 2), (18, 2), (28, 2)]  # (files, max_empty_slots)
