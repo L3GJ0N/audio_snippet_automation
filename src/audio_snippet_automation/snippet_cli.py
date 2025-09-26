@@ -1,10 +1,11 @@
 """Command line interface for audio snippet automation."""
 
-import argparse
 import csv
 import json
 import sys
 from pathlib import Path
+
+import click
 
 from .core import (
     AudioSnippetError,
@@ -18,63 +19,7 @@ from .core import (
 )
 
 
-def create_parser() -> argparse.ArgumentParser:
-    """Create the command line argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="audio-snippet-automation",
-        description="Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file.",
-    )
-    parser.add_argument(
-        "--csv", required=True, type=Path, help="Path to CSV file with jobs"
-    )
-    parser.add_argument(
-        "--format",
-        default="m4a",
-        choices=["m4a", "mp3", "wav"],
-        help="Default output format",
-    )
-    parser.add_argument(
-        "--precise",
-        action="store_true",
-        help="Re-encode for precise cuts (useful if copy cuts are off)",
-    )
-    parser.add_argument(
-        "--outdir", default="snippets", type=Path, help="Output directory"
-    )
-    parser.add_argument(
-        "--tempdir", default="downloads", type=Path, help="Temp download dir"
-    )
-    parser.add_argument(
-        "--cookies-from-browser",
-        help="Browser to extract cookies from (chrome, firefox, safari, etc.) for age-restricted videos",
-    )
-    parser.add_argument(
-        "--cookies",
-        type=Path,
-        help="Path to cookies.txt file for age-restricted videos",
-    )
-    parser.add_argument(
-        "--soundboard-ready",
-        action="store_true",
-        help="Convert all outputs to WAV format and generate soundboard config (overrides --format)",
-    )
-    parser.add_argument(
-        "--generate-soundboard-config",
-        type=Path,
-        help="Generate a soundboard JSON configuration file for the created snippets",
-    )
-    parser.add_argument(
-        "--soundboard-layout",
-        nargs=2,
-        type=int,
-        metavar=("ROWS", "COLS"),
-        default=[4, 6],
-        help="Grid layout for soundboard config (rows cols, default: 4 6)",
-    )
-    return parser
-
-
-def generate_soundboard_config(
+def generate_soundboard_config_file(
     snippet_files: list[dict], layout: tuple[int, int], config_path: Path
 ) -> None:
     """Generate a soundboard configuration file from created snippets."""
@@ -113,17 +58,17 @@ def generate_soundboard_config(
 
 
 def process_csv_row(
-    row: dict, row_num: int, args: argparse.Namespace, snippet_files: list[dict] = None
+    row: dict, row_num: int, args: dict, snippet_files: list[dict] = None
 ) -> None:
     """Process a single CSV row."""
     url = (row.get("url") or "").strip()
     start = time_str(row.get("start") or "")
     end = time_str(row.get("end") or "")
     out_base = (row.get("output") or "").strip()
-    fmt = (row.get("format") or "").strip().lower() or args.format
+    fmt = (row.get("format") or "").strip().lower() or args["format"]
 
     # Override format if soundboard-ready flag is set
-    if args.soundboard_ready:
+    if args["soundboard_ready"]:
         fmt = "wav"
         print(f"[INFO] Soundboard mode: Using WAV format for {out_base or 'snippet'}")
 
@@ -132,22 +77,22 @@ def process_csv_row(
         return
 
     # Get video ID
-    vid = get_video_id(url, args.cookies_from_browser, args.cookies)
+    vid = get_video_id(url, args["cookies_from_browser"], args["cookies"])
 
     # Download audio
     temp_audio = download_audio(
-        url, vid, args.tempdir, args.cookies_from_browser, args.cookies
+        url, vid, args["tempdir"], args["cookies_from_browser"], args["cookies"]
     )
 
     # Determine output name
     if not out_base:
         out_base = vid
 
-    final_path = args.outdir / f"{out_base}.{fmt}"
+    final_path = args["outdir"] / f"{out_base}.{fmt}"
     print(f"[INFO] Processing: {url} -> {final_path}")
 
     # Cut audio
-    cut_tmp = cut_audio(temp_audio, start, end, final_path, args.precise)
+    cut_tmp = cut_audio(temp_audio, start, end, final_path, args["precise"])
 
     # Convert to final format
     convert_format(cut_tmp, final_path, fmt)
@@ -165,27 +110,106 @@ def process_csv_row(
         snippet_files.append({"path": final_path, "label": label, "output": out_base})
 
 
-def main() -> None:
-    """Main entry point."""
-    parser = create_parser()
-    args = parser.parse_args()
-
+@click.command()
+@click.version_option(version="0.2.0", prog_name="asa")
+@click.option(
+    "--csv",
+    "csv_file",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="Path to CSV file with jobs",
+)
+@click.option(
+    "--format",
+    "output_format",
+    default="m4a",
+    type=click.Choice(["m4a", "mp3", "wav"]),
+    help="Default output format",
+)
+@click.option(
+    "--precise",
+    is_flag=True,
+    help="Re-encode for precise cuts (useful if copy cuts are off)",
+)
+@click.option(
+    "--outdir",
+    default="snippets",
+    type=click.Path(path_type=Path),
+    help="Output directory",
+)
+@click.option(
+    "--tempdir",
+    default="downloads",
+    type=click.Path(path_type=Path),
+    help="Temp download dir",
+)
+@click.option(
+    "--cookies-from-browser",
+    help="Browser to extract cookies from (chrome, firefox, safari, etc.) for age-restricted videos",
+)
+@click.option(
+    "--cookies",
+    type=click.Path(exists=True, path_type=Path),
+    help="Path to cookies.txt file for age-restricted videos",
+)
+@click.option(
+    "--soundboard-ready",
+    is_flag=True,
+    help="Convert all outputs to WAV format and generate soundboard config (overrides --format)",
+)
+@click.option(
+    "--generate-soundboard-config",
+    type=click.Path(path_type=Path),
+    help="Generate a soundboard JSON configuration file for the created snippets",
+)
+@click.option(
+    "--soundboard-layout",
+    nargs=2,
+    type=int,
+    default=[4, 6],
+    help="Grid layout for soundboard config (rows cols, default: 4 6)",
+)
+def main(
+    csv_file: Path,
+    output_format: str,
+    precise: bool,
+    outdir: Path,
+    tempdir: Path,
+    cookies_from_browser: str,
+    cookies: Path,
+    soundboard_ready: bool,
+    generate_soundboard_config: Path,
+    soundboard_layout: tuple[int, int],
+) -> None:
+    """Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file."""
     try:
         # Check dependencies
         check_dependencies()
 
         # Create directories
-        args.outdir.mkdir(exist_ok=True)
-        args.tempdir.mkdir(exist_ok=True)
+        outdir.mkdir(exist_ok=True)
+        tempdir.mkdir(exist_ok=True)
+
+        # Convert parameters to dict for compatibility with existing functions
+        args = {
+            "csv": csv_file,
+            "format": output_format,
+            "precise": precise,
+            "outdir": outdir,
+            "tempdir": tempdir,
+            "cookies_from_browser": cookies_from_browser,
+            "cookies": cookies,
+            "soundboard_ready": soundboard_ready,
+            "generate_soundboard_config": generate_soundboard_config,
+            "soundboard_layout": soundboard_layout,
+        }
 
         # Initialize snippet tracking for soundboard config
         snippet_files = []
-        should_generate_config = (
-            args.soundboard_ready or args.generate_soundboard_config
-        )
+        should_generate_config = soundboard_ready or generate_soundboard_config
 
         # Process CSV
-        with open(args.csv, newline="", encoding="utf-8") as f:
+        with open(csv_file, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             validate_csv_format(reader)
 
@@ -205,13 +229,11 @@ def main() -> None:
 
         # Generate soundboard configuration if requested
         if should_generate_config and snippet_files:
-            config_path = args.generate_soundboard_config or (
-                args.outdir / "soundboard.json"
-            )
-            layout = tuple(args.soundboard_layout)
-            generate_soundboard_config(snippet_files, layout, config_path)
+            config_path = generate_soundboard_config or (outdir / "soundboard.json")
+            layout = tuple(soundboard_layout)
+            generate_soundboard_config_file(snippet_files, layout, config_path)
 
-            if args.soundboard_ready:
+            if soundboard_ready:
                 print(
                     f"[INFO] Soundboard ready! Launch with: asa-soundboard --config {config_path}"
                 )
@@ -220,7 +242,7 @@ def main() -> None:
         print(f"[ERROR] {e}", file=sys.stderr)
         sys.exit(1)
     except FileNotFoundError:
-        print(f"[ERROR] CSV file not found: {args.csv}", file=sys.stderr)
+        print(f"[ERROR] CSV file not found: {csv_file}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n[INFO] Interrupted by user")
@@ -228,4 +250,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # Handle both direct execution and python -m execution
     main()

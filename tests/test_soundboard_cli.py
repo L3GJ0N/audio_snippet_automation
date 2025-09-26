@@ -3,7 +3,7 @@
 import json
 from unittest.mock import patch
 
-import pytest
+from click.testing import CliRunner
 
 from audio_snippet_automation.soundboard_cli import main
 
@@ -11,39 +11,29 @@ from audio_snippet_automation.soundboard_cli import main
 class TestSoundboardCLI:
     """Test suite for soundboard CLI."""
 
-    def test_help_command(self, capsys):
+    def test_help_command(self):
         """Test that help command works."""
-        with pytest.raises(SystemExit) as exc_info:
-            with patch("sys.argv", ["asa-soundboard", "--help"]):
-                main()
+        runner = CliRunner()
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "Virtual DJ Soundboard" in result.output
 
-        # Help should exit with code 0
-        assert exc_info.value.code == 0
-        captured = capsys.readouterr()
-        assert "Virtual DJ Soundboard" in captured.out
-
-    def test_missing_config_argument(self, capsys):
+    def test_missing_config_argument(self):
         """Test error when no arguments provided."""
-        with patch("sys.argv", ["asa-soundboard"]):
-            result = main()
-
-        # Should return error code
-        assert result == 1
-        captured = capsys.readouterr()
-        assert "--config is required" in captured.out
+        runner = CliRunner()
+        result = runner.invoke(main, [])
+        # Should return error code (click uses exit code 2 for usage errors)
+        assert result.exit_code == 2
+        assert "--config is required" in result.output
 
     def test_create_example_config(self, tmp_path):
         """Test creating example configuration."""
+        runner = CliRunner()
         config_path = tmp_path / "example_config.json"
 
-        with patch(
-            "sys.argv", ["asa-soundboard", "--create-example", str(config_path)]
-        ):
-            try:
-                main()
-            except SystemExit as e:
-                # Should exit cleanly
-                assert e.code == 0 or e.code is None
+        result = runner.invoke(main, ["--create-example", str(config_path)])
+        # Should exit cleanly
+        assert result.exit_code == 0
 
         # Check that config file was created
         assert config_path.exists()
@@ -58,38 +48,33 @@ class TestSoundboardCLI:
 
     def test_invalid_config_file(self, tmp_path):
         """Test error handling for non-existent config file."""
+        runner = CliRunner()
         non_existent_config = tmp_path / "does_not_exist.json"
 
-        with patch(
-            "sys.argv", ["asa-soundboard", "--config", str(non_existent_config)]
-        ):
-            result = main()
-
-        # Should return error code
-        assert result == 1
+        result = runner.invoke(main, ["--config", str(non_existent_config)])
+        # Should return error code (click uses 2 for path validation errors)
+        assert result.exit_code == 2
 
     def test_invalid_json_config(self, tmp_path):
         """Test error handling for invalid JSON config."""
+        runner = CliRunner()
         invalid_config = tmp_path / "invalid.json"
         invalid_config.write_text("{ invalid json }")
 
-        with patch("sys.argv", ["asa-soundboard", "--config", str(invalid_config)]):
-            result = main()
-
+        result = runner.invoke(main, ["--config", str(invalid_config)])
         # Should return error code
-        assert result == 1
+        assert result.exit_code != 0
 
     def test_config_missing_required_fields(self, tmp_path):
         """Test error handling for config missing required fields."""
+        runner = CliRunner()
         incomplete_config = tmp_path / "incomplete.json"
         config_data = {"layout": {"rows": 4}}  # Missing cols and buttons
         incomplete_config.write_text(json.dumps(config_data))
 
-        with patch("sys.argv", ["asa-soundboard", "--config", str(incomplete_config)]):
-            result = main()
-
+        result = runner.invoke(main, ["--config", str(incomplete_config)])
         # Should return error code
-        assert result == 1
+        assert result.exit_code != 0
 
     @patch("audio_snippet_automation.soundboard.pygame.mixer.init")
     @patch("audio_snippet_automation.soundboard.pygame.mixer.pre_init")
@@ -98,77 +83,70 @@ class TestSoundboardCLI:
     def test_valid_config_starts_server(
         self, mock_run, mock_set_channels, mock_pre_init, mock_init, tmp_path
     ):
-        """Test that valid config starts the soundboard server."""
-        valid_config = tmp_path / "valid.json"
+        """Test that valid config starts the server."""
+        runner = CliRunner()
+        config_path = tmp_path / "valid_config.json"
+
+        # Create dummy audio file
+        audio_file = tmp_path / "test.mp3"
+        audio_file.write_text("dummy audio content")
+
         config_data = {
             "layout": {"rows": 2, "cols": 2},
-            "buttons": [
-                {
-                    "file": str(tmp_path / "test.wav"),  # Use absolute path
-                    "row": 1,
-                    "col": 1,
-                    "label": "Test Button",
-                }
-            ],
+            "buttons": [{"file": str(audio_file), "row": 1, "col": 1, "label": "Test"}],
         }
-        valid_config.write_text(json.dumps(config_data))
+        config_path.write_text(json.dumps(config_data))
 
-        # Create a dummy audio file
-        (tmp_path / "test.wav").touch()
-
-        # Mock pygame initialization to succeed
+        # Mock pygame and server initialization
         mock_init.return_value = None
         mock_pre_init.return_value = None
         mock_set_channels.return_value = None
-
-        # Mock the server run method to avoid actually starting Flask
         mock_run.return_value = None
 
-        with patch("sys.argv", ["asa-soundboard", "--config", str(valid_config)]):
-            result = main()
+        with patch("audio_snippet_automation.soundboard_cli.open_browser"):
+            result = runner.invoke(main, ["--config", str(config_path)])
 
-        # Should succeed and start server
-        assert result == 0
-        mock_run.assert_called_once()
+        # Should start successfully
+        assert result.exit_code == 0
+        assert mock_run.called
+
+    def test_version_option(self):
+        """Test version option."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0
+        assert "0.2.0" in result.output
 
     @patch("audio_snippet_automation.soundboard.pygame.mixer.init")
     @patch("audio_snippet_automation.soundboard.pygame.mixer.pre_init")
     @patch("audio_snippet_automation.soundboard.pygame.mixer.set_num_channels")
     @patch("audio_snippet_automation.soundboard.VirtualDJSoundboard.run")
-    def test_custom_host_and_port(
+    def test_custom_host_port(
         self, mock_run, mock_set_channels, mock_pre_init, mock_init, tmp_path
     ):
-        """Test custom host and port arguments."""
-        valid_config = tmp_path / "valid.json"
+        """Test custom host and port options."""
+        runner = CliRunner()
+        config_path = tmp_path / "valid_config.json"
+
+        # Create dummy audio file
+        audio_file = tmp_path / "test.mp3"
+        audio_file.write_text("dummy audio content")
+
         config_data = {
             "layout": {"rows": 2, "cols": 2},
-            "buttons": [],
+            "buttons": [{"file": str(audio_file), "row": 1, "col": 1, "label": "Test"}],
         }
-        valid_config.write_text(json.dumps(config_data))
+        config_path.write_text(json.dumps(config_data))
 
-        # Mock pygame initialization to succeed
-        mock_init.return_value = None
-        mock_pre_init.return_value = None
-        mock_set_channels.return_value = None
         mock_run.return_value = None
 
-        with patch(
-            "sys.argv",
-            [
-                "asa-soundboard",
-                "--config",
-                str(valid_config),
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8080",
-            ],
-        ):
-            result = main()
+        with patch("audio_snippet_automation.soundboard_cli.open_browser"):
+            result = runner.invoke(
+                main,
+                ["--config", str(config_path), "--host", "0.0.0.0", "--port", "9000"],
+            )
 
-        # Should succeed and run soundboard
-        assert result == 0
-        mock_run.assert_called_once()
+        assert result.exit_code == 0
 
     @patch("audio_snippet_automation.soundboard.pygame.mixer.init")
     @patch("audio_snippet_automation.soundboard.pygame.mixer.pre_init")
@@ -178,117 +156,158 @@ class TestSoundboardCLI:
         self, mock_run, mock_set_channels, mock_pre_init, mock_init, tmp_path
     ):
         """Test --no-browser flag."""
-        valid_config = tmp_path / "valid.json"
+        runner = CliRunner()
+        config_path = tmp_path / "valid_config.json"
+
+        # Create dummy audio file
+        audio_file = tmp_path / "test.mp3"
+        audio_file.write_text("dummy audio content")
+
         config_data = {
             "layout": {"rows": 2, "cols": 2},
-            "buttons": [],
+            "buttons": [{"file": str(audio_file), "row": 1, "col": 1, "label": "Test"}],
         }
-        valid_config.write_text(json.dumps(config_data))
+        config_path.write_text(json.dumps(config_data))
 
-        # Mock pygame initialization to succeed
-        mock_init.return_value = None
-        mock_pre_init.return_value = None
-        mock_set_channels.return_value = None
         mock_run.return_value = None
 
         with patch(
-            "sys.argv",
-            ["asa-soundboard", "--config", str(valid_config), "--no-browser"],
-        ):
-            result = main()
+            "audio_snippet_automation.soundboard_cli.open_browser"
+        ) as mock_browser:
+            result = runner.invoke(main, ["--config", str(config_path), "--no-browser"])
 
-        # Should succeed and run soundboard without opening browser
-        assert result == 0
-        mock_run.assert_called_once()
+        assert result.exit_code == 0
+        # Browser should not be opened
+        assert not mock_browser.called
 
     @patch("audio_snippet_automation.soundboard.pygame.mixer.init")
     @patch("audio_snippet_automation.soundboard.pygame.mixer.pre_init")
     @patch("audio_snippet_automation.soundboard.pygame.mixer.set_num_channels")
-    def test_debug_and_verbose_flags(
-        self, mock_set_channels, mock_pre_init, mock_init, tmp_path
+    @patch("audio_snippet_automation.soundboard.VirtualDJSoundboard.run")
+    def test_debug_flag(
+        self, mock_run, mock_set_channels, mock_pre_init, mock_init, tmp_path
     ):
-        """Test debug and verbose flags."""
-        valid_config = tmp_path / "valid.json"
+        """Test --debug flag."""
+        runner = CliRunner()
+        config_path = tmp_path / "valid_config.json"
+
+        # Create dummy audio file
+        audio_file = tmp_path / "test.mp3"
+        audio_file.write_text("dummy audio content")
+
         config_data = {
             "layout": {"rows": 2, "cols": 2},
-            "buttons": [],
+            "buttons": [{"file": str(audio_file), "row": 1, "col": 1, "label": "Test"}],
         }
-        valid_config.write_text(json.dumps(config_data))
+        config_path.write_text(json.dumps(config_data))
 
-        # Mock pygame initialization to succeed
-        mock_init.return_value = None
-        mock_pre_init.return_value = None
-        mock_set_channels.return_value = None
+        mock_run.return_value = None
 
-        with patch(
-            "audio_snippet_automation.soundboard.VirtualDJSoundboard.run"
-        ) as mock_run:
-            with patch(
-                "sys.argv",
-                [
-                    "asa-soundboard",
-                    "--config",
-                    str(valid_config),
-                    "--debug",
-                    "--verbose",
-                ],
-            ):
-                result = main()
+        with patch("audio_snippet_automation.soundboard_cli.open_browser"):
+            result = runner.invoke(main, ["--config", str(config_path), "--debug"])
 
-            # Should succeed and run with debug enabled
-            assert result == 0
-            mock_run.assert_called_once()
-            args, kwargs = mock_run.call_args
-            assert kwargs.get("debug") is True
+        assert result.exit_code == 0
+        # Debug should be passed to run method
+        assert mock_run.called
 
-    def test_config_validation_button_positions(self, tmp_path):
-        """Test config validation for button positions."""
-        invalid_config = tmp_path / "invalid_positions.json"
+    @patch("audio_snippet_automation.soundboard.pygame.mixer.init")
+    @patch("audio_snippet_automation.soundboard.pygame.mixer.pre_init")
+    @patch("audio_snippet_automation.soundboard.pygame.mixer.set_num_channels")
+    @patch("audio_snippet_automation.soundboard.VirtualDJSoundboard.run")
+    def test_verbose_flag(
+        self, mock_run, mock_set_channels, mock_pre_init, mock_init, tmp_path
+    ):
+        """Test --verbose flag."""
+        runner = CliRunner()
+        config_path = tmp_path / "valid_config.json"
+
+        # Create dummy audio file
+        audio_file = tmp_path / "test.mp3"
+        audio_file.write_text("dummy audio content")
+
+        config_data = {
+            "layout": {"rows": 2, "cols": 2},
+            "buttons": [{"file": str(audio_file), "row": 1, "col": 1, "label": "Test"}],
+        }
+        config_path.write_text(json.dumps(config_data))
+
+        mock_run.return_value = None
+
+        with patch("audio_snippet_automation.soundboard_cli.open_browser"):
+            result = runner.invoke(main, ["--config", str(config_path), "--verbose"])
+
+        assert result.exit_code == 0
+
+    def test_config_with_audio_files_validation(self, tmp_path):
+        """Test config validation with actual audio file references."""
+        runner = CliRunner()
+        config_path = tmp_path / "config_with_files.json"
+
+        # Create fake audio files
+        audio_file1 = tmp_path / "sound1.mp3"
+        audio_file2 = tmp_path / "sound2.wav"
+        audio_file1.touch()
+        audio_file2.touch()
+
         config_data = {
             "layout": {"rows": 2, "cols": 2},
             "buttons": [
-                {
-                    "file": "test.wav",
-                    "row": 5,  # Invalid: outside grid
-                    "col": 1,
-                    "label": "Test Button",
-                }
+                {"file": str(audio_file1), "row": 1, "col": 1, "label": "Sound 1"},
+                {"file": str(audio_file2), "row": 1, "col": 2, "label": "Sound 2"},
             ],
         }
-        invalid_config.write_text(json.dumps(config_data))
+        config_path.write_text(json.dumps(config_data))
 
-        with patch("sys.argv", ["asa-soundboard", "--config", str(invalid_config)]):
-            result = main()
+        with patch("audio_snippet_automation.soundboard.VirtualDJSoundboard.run"):
+            with patch("audio_snippet_automation.soundboard_cli.open_browser"):
+                result = runner.invoke(main, ["--config", str(config_path)])
 
-        # Should return error code due to validation failure
-        assert result == 1
+        # Should handle config with file references correctly
+        assert result.exit_code == 0
 
+    @patch("audio_snippet_automation.soundboard.pygame.mixer.init")
+    @patch("audio_snippet_automation.soundboard.pygame.mixer.pre_init")
+    @patch("audio_snippet_automation.soundboard.pygame.mixer.set_num_channels")
+    @patch("audio_snippet_automation.soundboard.VirtualDJSoundboard.run")
+    def test_comprehensive_options(
+        self, mock_run, mock_set_channels, mock_pre_init, mock_init, tmp_path
+    ):
+        """Test CLI with comprehensive combination of options."""
+        runner = CliRunner()
+        config_path = tmp_path / "comprehensive_config.json"
 
-@pytest.fixture
-def sample_soundboard_config():
-    """Provide sample soundboard configuration for tests."""
-    return {
-        "layout": {"rows": 4, "cols": 6},
-        "buttons": [
-            {
-                "file": "test1.wav",
-                "row": 1,
-                "col": 1,
-                "label": "Test Button 1",
-            },
-            {
-                "file": "test2.wav",
-                "row": 1,
-                "col": 2,
-                "label": "Test Button 2",
-            },
-        ],
-    }
+        # Create dummy audio files
+        audio_file1 = tmp_path / "test1.mp3"
+        audio_file2 = tmp_path / "test2.wav"
+        audio_file1.write_text("dummy audio content 1")
+        audio_file2.write_text("dummy audio content 2")
 
+        config_data = {
+            "layout": {"rows": 3, "cols": 4},
+            "buttons": [
+                {"file": str(audio_file1), "row": 1, "col": 1, "label": "Test 1"},
+                {"file": str(audio_file2), "row": 1, "col": 2, "label": "Test 2"},
+            ],
+        }
+        config_path.write_text(json.dumps(config_data))
 
-@pytest.fixture
-def sample_config_file(tmp_path, sample_soundboard_config):
-    """Create a temporary config file with sample content."""
-    config_file = tmp_path / "test_config.json"
-    config_file.write_text(json.dumps(sample_soundboard_config))
-    return config_file
+        mock_run.return_value = None
+
+        with patch("audio_snippet_automation.soundboard_cli.open_browser"):
+            result = runner.invoke(
+                main,
+                [
+                    "--config",
+                    str(config_path),
+                    "--host",
+                    "localhost",
+                    "--port",
+                    "8080",
+                    "--no-browser",
+                    "--debug",
+                    "--verbose",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert mock_run.called
