@@ -5,6 +5,14 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  # Allow manual triggering with full matrix for release testing
+  workflow_dispatch:
+    inputs:
+      full_matrix:
+        description: 'Run full OS/Python matrix'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   test:
@@ -13,11 +21,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.12", "3.13"]
+        # Cost-optimized matrix:
+        # - PRs: Ubuntu + Python 3.12 only (fast feedback, low cost)
+        # - Pushes to main/develop: Full matrix (comprehensive validation)
+        # - Manual dispatch: Configurable via input
+        os: >-
+          ${{
+            (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.full_matrix == 'true'))
+            && fromJSON('["ubuntu-latest", "windows-latest", "macos-latest"]')
+            || fromJSON('["ubuntu-latest"]')
+          }}
+        python-version: >-
+          ${{
+            (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.full_matrix == 'true'))
+            && fromJSON('["3.12", "3.13"]')
+            || fromJSON('["3.12"]')
+          }}
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Show test configuration
+      run: |
+        echo "🧪 **Test Configuration**" >> $GITHUB_STEP_SUMMARY
+        echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **OS**: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Python**: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "ℹ️ **Cost-optimized PR testing**: Running minimal matrix (Ubuntu + Python 3.12)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Full matrix**: Will run on merge to main/develop" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "🔄 **Full matrix testing**: Running comprehensive OS/Python combinations" >> $GITHUB_STEP_SUMMARY
+        fi
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
