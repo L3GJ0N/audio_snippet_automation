@@ -154,7 +154,7 @@ jobs:
 
   security:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && 'self-hosted' || 'ubuntu-latest' }}
     steps:
     - uses: actions/checkout@v4
 
@@ -181,7 +181,7 @@ jobs:
 
   build:
     name: Build Distribution
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && 'self-hosted' || 'ubuntu-latest' }}
     needs: [test]
     steps:
     - uses: actions/checkout@v4
@@ -211,7 +211,7 @@ jobs:
 
   integration-test:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && 'self-hosted' || 'ubuntu-latest' }}
     needs: [test]
     steps:
     - uses: actions/checkout@v4
@@ -247,7 +247,7 @@ jobs:
         uv run asa-soundboard --create-example integration_config.json
 
         # Verify config is valid
-        python -c "
+        uv run python -c "
         import json
         config = json.load(open('integration_config.json'))
         assert 'layout' in config
