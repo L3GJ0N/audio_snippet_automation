@@ -17,13 +17,13 @@ on:
 jobs:
   test:
     name: Test on Python ${{ matrix.python-version }} - ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ github.event_name == 'pull_request' && 'self-hosted' || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # Cost-optimized matrix:
-        # - PRs: Ubuntu + Python 3.12 only (fast feedback, low cost)
-        # - Pushes to main/develop: Full matrix (comprehensive validation)
+        # Cost-optimized matrix with self-hosted runners:
+        # - PRs: Self-hosted runner (free compute + GitHub web UI)
+        # - Pushes to main/develop: GitHub runners (multi-OS validation)
         # - Manual dispatch: Configurable via input
         os: >-
           ${{
@@ -45,12 +45,14 @@ jobs:
       run: |
         echo "🧪 **Test Configuration**" >> $GITHUB_STEP_SUMMARY
         echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Runner**: ${{ runner.name || 'GitHub-hosted' }}" >> $GITHUB_STEP_SUMMARY
         echo "- **OS**: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Python**: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         if [ "${{ github.event_name }}" = "pull_request" ]; then
-          echo "ℹ️ **Cost-optimized PR testing**: Running minimal matrix (Ubuntu + Python 3.12)" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Full matrix**: Will run on merge to main/develop" >> $GITHUB_STEP_SUMMARY
+          echo "🖥️ **Self-hosted PR testing**: Running on your own hardware with GitHub web UI" >> $GITHUB_STEP_SUMMARY
+          echo "💰 **Cost**: $0 (self-hosted runner)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Full matrix**: Will run on GitHub runners when merged to main/develop" >> $GITHUB_STEP_SUMMARY
         else
           echo "🔄 **Full matrix testing**: Running comprehensive OS/Python combinations" >> $GITHUB_STEP_SUMMARY
         fi
