@@ -250,4 +250,5 @@ def main(
 
 
 if __name__ == "__main__":
+    # Handle both direct execution and python -m execution
     main()
