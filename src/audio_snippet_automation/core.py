@@ -122,7 +122,7 @@ def validate_csv_format(reader: csv.DictReader) -> None:
     required = {"url", "start", "end"}
     if not required.issubset(set(reader.fieldnames or [])):
         raise AudioSnippetError(
-            f"CSV must include columns: {', '.join(sorted(required))} (plus optional 'output', 'format')"
+            f"CSV must include columns: {', '.join(sorted(required))} (plus optional 'output'). All outputs will be in WAV format."
         )
 
 

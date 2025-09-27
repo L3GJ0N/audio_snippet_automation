@@ -65,12 +65,7 @@ def process_csv_row(
     start = time_str(row.get("start") or "")
     end = time_str(row.get("end") or "")
     out_base = (row.get("output") or "").strip()
-    fmt = (row.get("format") or "").strip().lower() or args["format"]
-
-    # Override format if soundboard-ready flag is set
-    if args["soundboard_ready"]:
-        fmt = "wav"
-        print(f"[INFO] Soundboard mode: Using WAV format for {out_base or 'snippet'}")
+    fmt = "wav"  # Always use WAV format for soundboard compatibility
 
     if not url or not start or not end:
         print(f"[WARN] Row {row_num} missing url/start/end. Skipping.")
@@ -120,13 +115,6 @@ def process_csv_row(
     help="Path to CSV file with jobs",
 )
 @click.option(
-    "--format",
-    "output_format",
-    default="m4a",
-    type=click.Choice(["m4a", "mp3", "wav"]),
-    help="Default output format",
-)
-@click.option(
     "--precise",
     is_flag=True,
     help="Re-encode for precise cuts (useful if copy cuts are off)",
@@ -153,11 +141,6 @@ def process_csv_row(
     help="Path to cookies.txt file for age-restricted videos",
 )
 @click.option(
-    "--soundboard-ready",
-    is_flag=True,
-    help="Convert all outputs to WAV format and generate soundboard config (overrides --format)",
-)
-@click.option(
     "--generate-soundboard-config",
     type=click.Path(path_type=Path),
     help="Generate a soundboard JSON configuration file for the created snippets",
@@ -171,17 +154,18 @@ def process_csv_row(
 )
 def main(
     csv_file: Path,
-    output_format: str,
     precise: bool,
     outdir: Path,
     tempdir: Path,
     cookies_from_browser: str,
     cookies: Path,
-    soundboard_ready: bool,
     generate_soundboard_config: Path,
     soundboard_layout: tuple[int, int],
 ) -> None:
-    """Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file."""
+    """Create multiple precisely trimmed audio snippets from YouTube URLs using a single CSV file.
+
+    All output files are created in WAV format for soundboard compatibility.
+    """
     try:
         # Check dependencies
         check_dependencies()
@@ -193,20 +177,19 @@ def main(
         # Convert parameters to dict for compatibility with existing functions
         args = {
             "csv": csv_file,
-            "format": output_format,
+            "format": "wav",  # Always use WAV format for soundboard compatibility
             "precise": precise,
             "outdir": outdir,
             "tempdir": tempdir,
             "cookies_from_browser": cookies_from_browser,
             "cookies": cookies,
-            "soundboard_ready": soundboard_ready,
             "generate_soundboard_config": generate_soundboard_config,
             "soundboard_layout": soundboard_layout,
         }
 
         # Initialize snippet tracking for soundboard config
         snippet_files = []
-        should_generate_config = soundboard_ready or generate_soundboard_config
+        should_generate_config = generate_soundboard_config is not None
 
         # Process CSV
         with open(csv_file, newline="", encoding="utf-8") as f:
@@ -233,10 +216,9 @@ def main(
             layout = tuple(soundboard_layout)
             generate_soundboard_config_file(snippet_files, layout, config_path)
 
-            if soundboard_ready:
-                print(
-                    f"[INFO] Soundboard ready! Launch with: asa-soundboard --config {config_path}"
-                )
+            print(
+                f"[INFO] Soundboard ready! Launch with: asa-soundboard --config {config_path}"
+            )
 
     except AudioSnippetError as e:
         print(f"[ERROR] {e}", file=sys.stderr)

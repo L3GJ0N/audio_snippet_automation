@@ -40,14 +40,15 @@ The tool reads a CSV file where each row defines:
 - `url`: YouTube video URL
 - `start`: When to start cutting (e.g., `00:01:23.500`)
 - `end`: When to stop cutting (e.g., `00:01:30.000`)
-- `output`: Filename for the audio snippet
-- `format`: Audio format (m4a, mp3, wav)
+- `output`: Filename for the audio snippet (optional)
+
+All audio snippets are saved in **WAV format** for optimal soundboard compatibility.
 
 **Example CSV:**
 ```csv
-url,start,end,output,format
-https://www.youtube.com/watch?v=J_vOzkxKfzk,00:00:14,00:00:17,thanos-like_to_lose,m4a
-https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handle_truth,m4a
+url,start,end,output
+https://www.youtube.com/watch?v=J_vOzkxKfzk,00:00:14,00:00:17,thanos-like_to_lose
+https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handle_truth
 ```
 
 ## Installation
@@ -112,15 +113,16 @@ Create a CSV file with these columns:
 | `start`  | ✅        | Start time: `SS(.ms)` or `HH:MM:SS(.ms)` | `00:01:23.500`             |
 | `end`    | ✅        | End time (same format as start)         | `00:01:30.000`             |
 | `output` | ❌        | Custom filename (without extension)     | `my_audio_clip`            |
-| `format` | ❌        | Override format (`m4a`, `mp3`, `wav`)    | `mp3`                      |
+
+**Note:** All audio files are automatically saved in **WAV format** for soundboard compatibility.
 
 ### Example CSV File
 
 ```csv
-url,start,end,output,format
-https://www.youtube.com/watch?v=J_vOzkxKfzk,00:00:14,00:00:17,thanos-like_to_lose,m4a
-https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handle_truth,m4a
-https://www.youtube.com/watch?v=31Voz1H40zI,00:01:22.110,00:01:23.800,i_am_the_danger,m4a
+url,start,end,output
+https://www.youtube.com/watch?v=J_vOzkxKfzk,00:00:14,00:00:17,thanos-like_to_lose
+https://www.youtube.com/watch?v=PWSx0bBiNIs,00:00:04.230,00:00:07,you_cant_handle_truth
+https://www.youtube.com/watch?v=31Voz1H40zI,00:01:22.110,00:01:23.800,i_am_the_danger
 ```
 
 ### Advanced Options

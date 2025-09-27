@@ -21,7 +21,7 @@ def test_time_str():
 
 def test_validate_csv_format_valid():
     """Test CSV validation with valid format."""
-    csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
+    csv_content = "url,start,end,output\nhttps://example.com,0,10,test"
     reader = csv.DictReader(StringIO(csv_content))
     # Should not raise
     validate_csv_format(reader)
