@@ -4,6 +4,7 @@
 /examples/downloads/
 /examples/snippets/
 /test_soundboard/
+/wav_files_test/
 
 # Intermediate cut files
 *.cut.m4a

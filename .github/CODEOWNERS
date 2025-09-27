@@ -1,0 +1,29 @@
+# CODEOWNERS file for audio_snippet_automation
+#
+# This file defines who should be automatically requested for review
+# when changes are made to specific files or directories.
+#
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global ownership - all files require review from the repository owner
+* @L3GJ0N @betwo @lschilli
+
+# Core application code - requires review from maintainers
+/src/ @L3GJ0N @betwo @lschilli
+/tests/ @L3GJ0N @betwo @lschilli
+
+# Configuration and build files - requires careful review
+pyproject.toml @L3GJ0N @betwo @lschilli
+uv.lock @L3GJ0N @betwo @lschilli
+.github/ @L3GJ0N @betwo @lschilli
+.gitignore @L3GJ0N @betwo @lschilli
+
+# Documentation - can be reviewed by documentation maintainers
+README.MD @L3GJ0N @betwo @lschilli
+/docs/ @L3GJ0N @betwo @lschilli
+
+# Examples and sample files
+/examples/ @L3GJ0N @betwo @lschilli
+
+# GitHub Actions and CI/CD workflows - requires admin review
+/.github/workflows/ @L3GJ0N @betwo @lschilli
