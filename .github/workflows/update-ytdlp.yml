@@ -1,0 +1,130 @@
+name: Auto-update yt-dlp
+
+on:
+  schedule:
+    # Run every Monday and Thursday at 6:00 AM UTC
+    - cron: '0 6 * * 1,4'
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-ytdlp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Get current yt-dlp version from pyproject.toml
+        id: current-version
+        run: |
+          current=$(grep "yt-dlp>=" pyproject.toml | sed 's/.*yt-dlp>=\([^"]*\).*/\1/')
+          echo "Current version: $current"
+          echo "current=$current" >> $GITHUB_OUTPUT
+
+      - name: Check latest yt-dlp version
+        id: latest-version
+        run: |
+          latest=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r '.tag_name')
+          echo "Latest version: $latest"
+          echo "latest=$latest" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        id: compare
+        run: |
+          current="${{ steps.current-version.outputs.current }}"
+          latest="${{ steps.latest-version.outputs.latest }}"
+
+          if [ "$current" != "$latest" ]; then
+            echo "Update needed: $current -> $latest"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "version_change=$current -> $latest" >> $GITHUB_OUTPUT
+          else
+            echo "Already up to date: $current"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update yt-dlp version
+        if: steps.compare.outputs.needs_update == 'true'
+        run: |
+          latest="${{ steps.latest-version.outputs.latest }}"
+          # Update pyproject.toml
+          sed -i "s/yt-dlp>=[^\"]*\"/yt-dlp>=$latest\"/" pyproject.toml
+          echo "Updated pyproject.toml to yt-dlp>=$latest"
+
+      - name: Update lock file
+        if: steps.compare.outputs.needs_update == 'true'
+        run: |
+          uv lock
+
+      - name: Run tests to ensure update works
+        if: steps.compare.outputs.needs_update == 'true'
+        run: |
+          uv run python -m pytest tests/ -v --tb=short
+
+      - name: Create Pull Request
+        if: steps.compare.outputs.needs_update == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            chore: update yt-dlp to ${{ steps.latest-version.outputs.latest }}
+
+            - Auto-updated from ${{ steps.compare.outputs.version_change }}
+            - Ensures compatibility with latest YouTube API changes
+            - All tests passing
+          title: "🤖 Auto-update yt-dlp to ${{ steps.latest-version.outputs.latest }}"
+          body: |
+            ## 🤖 Automated yt-dlp Update
+
+            This PR automatically updates yt-dlp to the latest version to ensure compatibility with YouTube's API changes.
+
+            **Changes:**
+            - 📦 Updated `yt-dlp` from `${{ steps.current-version.outputs.current }}` to `${{ steps.latest-version.outputs.latest }}`
+            - 🔒 Updated `uv.lock` file
+            - ✅ All tests passing
+
+            **Why this update?**
+            YouTube frequently changes their API, and yt-dlp releases updates to maintain compatibility. This ensures users can continue downloading videos without manual intervention.
+
+            **Testing:**
+            - All existing tests pass
+            - Dependencies resolved successfully
+
+            ---
+
+            *This PR was created automatically by the `update-ytdlp.yml` workflow.*
+
+            **Review and merge when ready!** 🚀
+          branch: auto-update-ytdlp-${{ steps.latest-version.outputs.latest }}
+          branch-suffix: timestamp
+          delete-branch: true
+          labels: |
+            automated
+            dependencies
+            yt-dlp
+            enhancement
+          draft: false
+
+      - name: Summary
+        if: steps.compare.outputs.needs_update == 'true'
+        run: |
+          echo "✅ Created PR to update yt-dlp from ${{ steps.current-version.outputs.current }} to ${{ steps.latest-version.outputs.latest }}"
+
+      - name: No update needed
+        if: steps.compare.outputs.needs_update == 'false'
+        run: |
+          echo "ℹ️ yt-dlp is already up to date (${{ steps.current-version.outputs.current }})"

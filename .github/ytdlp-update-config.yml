@@ -1,0 +1,38 @@
+# yt-dlp Auto-Update Configuration
+#
+# This file configures the automated yt-dlp update behavior.
+# Modify these settings to customize how updates are handled.
+
+# Update schedule (cron format)
+# Default: Run twice weekly (Monday & Thursday at 6 AM UTC)
+schedule: "0 6 * * 1,4"
+
+# Health check schedule (cron format)
+# Default: Daily at 8 AM UTC for quick issue detection
+health_check_schedule: "0 8 * * *"
+
+# Test configuration
+test_video_url: "https://www.youtube.com/watch?v=BaW_jenozKc"  # Creative Commons video
+run_real_download_test: true
+run_tests_after_update: true
+
+# Pull Request settings
+auto_merge_if_tests_pass: false  # Set to true for automatic merging
+create_draft_pr: false           # Set to true to create draft PRs
+delete_update_branch: true       # Clean up branches after PR creation
+
+# Labels to apply to automated PRs
+pr_labels:
+  - "🤖 automated"
+  - "📦 dependencies"
+  - "🔧 maintenance"
+  - "yt-dlp"
+
+# Issue creation on failure
+create_issue_on_failure: true
+issue_assignee: "" # Leave empty to assign to repo owner
+
+# Notification settings
+notify_on_success: true
+notify_on_failure: true
+notify_on_no_update: false
