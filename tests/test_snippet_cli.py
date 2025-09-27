@@ -59,7 +59,7 @@ class TestSnippetCLI:
         runner = CliRunner()
         # Create a valid CSV file
         valid_csv = tmp_path / "valid.csv"
-        csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
+        csv_content = "url,start,end,output\nhttps://example.com,0,10,test"
         valid_csv.write_text(csv_content)
 
         # Mock the validation to pass
@@ -71,30 +71,12 @@ class TestSnippetCLI:
         # Should exit cleanly with mocked functions
         assert result.exit_code == 0
 
-    def test_soundboard_ready_flag(self, tmp_path):
-        """Test soundboard-ready flag behavior."""
-        runner = CliRunner()
-        valid_csv = tmp_path / "valid.csv"
-        csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        valid_csv.write_text(csv_content)
-
-        with patch(
-            "audio_snippet_automation.snippet_cli.process_csv_row"
-        ) as mock_process:
-            with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
-                result = runner.invoke(
-                    main, ["--csv", str(valid_csv), "--soundboard-ready"]
-                )
-                # Should have been called
-                assert mock_process.called
-                assert result.exit_code == 0
-
     def test_generate_soundboard_config_flag(self, tmp_path):
         """Test soundboard config generation flag."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
         config_path = tmp_path / "test_config.json"
-        csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
+        csv_content = "url,start,end,output\nhttps://example.com,0,10,test"
         valid_csv.write_text(csv_content)
 
         # Mock snippet creation so config generation is triggered
@@ -130,9 +112,7 @@ class TestSnippetCLI:
         """Test that output directory is created."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
         output_dir = tmp_path / "output"
 
         result = runner.invoke(
@@ -145,15 +125,11 @@ class TestSnippetCLI:
         """Test CLI with custom options."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
 
         with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
             with patch("audio_snippet_automation.snippet_cli.process_csv_row"):
-                result = runner.invoke(
-                    main, ["--csv", str(valid_csv), "--format", "wav", "--precise"]
-                )
+                result = runner.invoke(main, ["--csv", str(valid_csv), "--precise"])
                 # Should complete with mocked functions
                 assert result.exit_code == 0
 
@@ -168,9 +144,7 @@ class TestSnippetCLI:
         """Test custom temporary directory option."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
         temp_dir = tmp_path / "temp"
 
         with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
@@ -184,9 +158,7 @@ class TestSnippetCLI:
         """Test cookies from browser option."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
 
         with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
             with patch("audio_snippet_automation.snippet_cli.process_csv_row"):
@@ -199,9 +171,7 @@ class TestSnippetCLI:
         """Test cookies file option."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
         cookies_file = tmp_path / "cookies.txt"
         cookies_file.write_text("# Netscape HTTP Cookie File")
 
@@ -217,7 +187,7 @@ class TestSnippetCLI:
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
         config_path = tmp_path / "test_config.json"
-        csv_content = "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
+        csv_content = "url,start,end,output\nhttps://example.com,0,10,test"
         valid_csv.write_text(csv_content)
 
         # Mock snippet creation so config generation is triggered
@@ -247,33 +217,11 @@ class TestSnippetCLI:
                 # Should complete without error
                 assert result.exit_code == 0
 
-    def test_format_options(self, tmp_path):
-        """Test various output format options."""
-        runner = CliRunner()
-        valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
-
-        # Test different format options
-        formats = ["m4a", "wav", "mp3"]
-
-        for fmt in formats:
-            with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
-                with patch("audio_snippet_automation.snippet_cli.process_csv_row"):
-                    result = runner.invoke(
-                        main, ["--csv", str(valid_csv), "--format", fmt]
-                    )
-                    # Should succeed with mocked functions
-                    assert result.exit_code == 0
-
     def test_precise_flag(self, tmp_path):
         """Test precise re-encoding flag."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
 
         with patch("audio_snippet_automation.snippet_cli.validate_csv_format"):
             with patch("audio_snippet_automation.snippet_cli.process_csv_row"):
@@ -289,9 +237,7 @@ class TestSnippetCLI:
         """Test CLI with comprehensive combination of options."""
         runner = CliRunner()
         valid_csv = tmp_path / "valid.csv"
-        valid_csv.write_text(
-            "url,start,end,output,format\nhttps://example.com,0,10,test,mp3"
-        )
+        valid_csv.write_text("url,start,end,output\nhttps://example.com,0,10,test")
         output_dir = tmp_path / "output"
         temp_dir = tmp_path / "temp"
         config_path = tmp_path / "soundboard.json"
@@ -307,8 +253,6 @@ class TestSnippetCLI:
             [
                 "--csv",
                 str(valid_csv),
-                "--format",
-                "wav",
                 "--precise",
                 "--outdir",
                 str(output_dir),
@@ -316,7 +260,6 @@ class TestSnippetCLI:
                 str(temp_dir),
                 "--cookies",
                 str(cookies_file),
-                "--soundboard-ready",
                 "--generate-soundboard-config",
                 str(config_path),
                 "--soundboard-layout",
