@@ -1,5 +1,5 @@
 """
-Virtual DJ Soundboard - A customizable grid-based audio playback interface.
+MemeDeck Live - A customizable grid-based audio playback interface.
 
 This module provides a web-based soundboard interface where users can:
 - Define custom button layouts via JSON configuration
@@ -266,9 +266,7 @@ class VirtualDJSoundboard:
     def run(self, debug: bool = False) -> None:
         """Start the Flask web server."""
         try:
-            logger.info(
-                f"Starting Virtual DJ Soundboard on http://{self.host}:{self.port}"
-            )
+            logger.info(f"Starting MemeDeck Live on http://{self.host}:{self.port}")
             logger.info(
                 f"Layout: {self.config.layout[0]}x{self.config.layout[1]} ({len(self.config.buttons)} buttons)"
             )

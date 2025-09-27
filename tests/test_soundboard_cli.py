@@ -16,7 +16,7 @@ class TestSoundboardCLI:
         runner = CliRunner()
         result = runner.invoke(main, ["--help"])
         assert result.exit_code == 0
-        assert "Virtual DJ Soundboard" in result.output
+        assert "MemeDeck Live" in result.output
 
     def test_missing_config_argument(self):
         """Test error when no arguments provided."""
