@@ -1,0 +1,260 @@
+name: yt-dlp Health Check & Update
+
+on:
+  schedule:
+    # Run daily at 8 AM UTC (to catch urgent YouTube breakages quickly)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update even if versions match'
+        required: false
+        default: false
+        type: boolean
+      test_with_real_video:
+        description: 'Test download with a real YouTube video'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    outputs:
+      needs_update: ${{ steps.health-check.outputs.needs_update }}
+      current_version: ${{ steps.versions.outputs.current }}
+      latest_version: ${{ steps.versions.outputs.latest }}
+      health_status: ${{ steps.health-check.outputs.status }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Get version information
+        id: versions
+        run: |
+          # Get current version from pyproject.toml
+          current=$(grep "yt-dlp>=" pyproject.toml | sed 's/.*yt-dlp>=\([^"]*\).*/\1/')
+
+          # Get latest version from GitHub API with retry logic
+          for i in {1..3}; do
+            latest=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r '.tag_name' 2>/dev/null || echo "")
+            if [[ -n "$latest" && "$latest" != "null" ]]; then
+              break
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 5
+          done
+
+          if [[ -z "$latest" || "$latest" == "null" ]]; then
+            echo "Failed to get latest version from GitHub API"
+            exit 1
+          fi
+
+          echo "current=$current" >> $GITHUB_OUTPUT
+          echo "latest=$latest" >> $GITHUB_OUTPUT
+          echo "Current: $current, Latest: $latest"
+
+      - name: Test current yt-dlp functionality
+        id: health-check
+        run: |
+          # Install current version and test basic functionality
+          uv run yt-dlp --version || {
+            echo "❌ yt-dlp installation failed"
+            echo "status=broken" >> $GITHUB_OUTPUT
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          # Test with a stable YouTube video (if requested)
+          if [[ "${{ github.event.inputs.test_with_real_video }}" == "true" ]]; then
+            # Use a Creative Commons video that should always be available
+            test_result=$(uv run yt-dlp --no-playlist --get-id "https://www.youtube.com/watch?v=BaW_jenozKc" 2>&1 || echo "FAILED")
+            if [[ "$test_result" == *"FAILED"* || "$test_result" == *"ERROR"* ]]; then
+              echo "❌ yt-dlp functionality test failed: $test_result"
+              echo "status=failing" >> $GITHUB_OUTPUT
+              echo "needs_update=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+
+          # Check if update is needed
+          current="${{ steps.versions.outputs.current }}"
+          latest="${{ steps.versions.outputs.latest }}"
+          force="${{ github.event.inputs.force_update }}"
+
+          if [[ "$current" != "$latest" || "$force" == "true" ]]; then
+            echo "✅ Update needed or forced: $current -> $latest"
+            echo "status=outdated" >> $GITHUB_OUTPUT
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ yt-dlp is healthy and up-to-date: $current"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+  update:
+    needs: health-check
+    if: needs.health-check.outputs.needs_update == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Update yt-dlp version
+        run: |
+          latest="${{ needs.health-check.outputs.latest_version }}"
+          current="${{ needs.health-check.outputs.current_version }}"
+
+          echo "Updating from $current to $latest"
+
+          # Update pyproject.toml
+          sed -i "s/yt-dlp>=[^\"]*\"/yt-dlp>=$latest\"/" pyproject.toml
+
+          # Verify the change
+          grep "yt-dlp>=" pyproject.toml
+
+      - name: Update dependencies and run tests
+        run: |
+          # Update lock file
+          uv lock
+
+          # Run tests to ensure everything works
+          uv run python -m pytest tests/ -v --tb=short || {
+            echo "❌ Tests failed after yt-dlp update"
+            exit 1
+          }
+
+      - name: Test real download functionality
+        run: |
+          # Test actual download with the updated version
+          echo "Testing download functionality..."
+          uv run yt-dlp --no-playlist --get-id "https://www.youtube.com/watch?v=BaW_jenozKc" || {
+            echo "❌ Download test failed with updated version"
+            exit 1
+          }
+          echo "✅ Download test passed"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            chore(deps): update yt-dlp to ${{ needs.health-check.outputs.latest_version }}
+
+            - Auto-updated from ${{ needs.health-check.outputs.current_version }} to ${{ needs.health-check.outputs.latest_version }}
+            - Reason: ${{ needs.health-check.outputs.health_status }}
+            - All tests passing ✅
+            - Download functionality verified ✅
+          title: "🤖 Auto-update yt-dlp (${{ needs.health-check.outputs.current_version }} → ${{ needs.health-check.outputs.latest_version }})"
+          body: |
+            ## 🤖 Automated yt-dlp Maintenance
+
+            This PR automatically updates yt-dlp to ensure reliable YouTube download functionality.
+
+            ### 📊 Update Details
+            - **From:** `${{ needs.health-check.outputs.current_version }}`
+            - **To:** `${{ needs.health-check.outputs.latest_version }}`
+            - **Trigger:** ${{ needs.health-check.outputs.health_status }}
+            - **Date:** ${{ steps.date.outputs.date }}
+
+            ### ✅ Verification
+            - [x] Dependencies updated successfully
+            - [x] All tests passing
+            - [x] Download functionality verified
+            - [x] Lock file updated
+
+            ### 🔍 Why this matters
+            YouTube frequently updates their systems, and yt-dlp releases patches to maintain compatibility. Regular updates ensure:
+            - ✅ Continued access to YouTube content
+            - ✅ Better error handling
+            - ✅ Security improvements
+            - ✅ Performance optimizations
+
+            ### 🚀 Ready to merge!
+            This update has been automatically tested and is safe to merge.
+
+            ---
+            *Generated by the `update-ytdlp-health.yml` workflow*
+          branch: auto-update-ytdlp-${{ needs.health-check.outputs.latest_version }}
+          branch-suffix: timestamp
+          delete-branch: true
+          labels: |
+            🤖 automated
+            📦 dependencies
+            🔧 maintenance
+            yt-dlp
+          assignees: ${{ github.repository_owner }}
+
+  create-issue-on-failure:
+    needs: [health-check, update]
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create issue for failed update
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 yt-dlp Auto-Update Failed - Requires Manual Intervention`,
+              body: `## ⚠️ Automated yt-dlp Update Failed
+
+              The automated yt-dlp update process encountered an error and requires manual attention.
+
+              **Details:**
+              - Current version: \`${{ needs.health-check.outputs.current_version || 'unknown' }}\`
+              - Target version: \`${{ needs.health-check.outputs.latest_version || 'unknown' }}\`
+              - Health status: \`${{ needs.health-check.outputs.health_status || 'unknown' }}\`
+              - Workflow run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+              **Recommended Actions:**
+              1. Check the workflow logs for specific error details
+              2. Manually test yt-dlp functionality: \`uv run yt-dlp --version\`
+              3. Update yt-dlp manually if needed: \`uv add "yt-dlp>=LATEST_VERSION"\`
+              4. Run tests: \`uv run python -m pytest tests/\`
+
+              **Impact:**
+              Users may experience issues downloading YouTube content until this is resolved.
+              `,
+              labels: ['🚨 urgent', '🤖 automated', '🔧 maintenance', 'yt-dlp']
+            });
+
+            console.log(\`Created issue #\${issue.data.number}\`);
+
+  notify-success:
+    needs: [health-check, update]
+    if: success() && needs.health-check.outputs.needs_update == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify successful update
+        run: |
+          echo "✅ yt-dlp successfully updated from ${{ needs.health-check.outputs.current_version }} to ${{ needs.health-check.outputs.latest_version }}"
+          echo "PR created and ready for review!"

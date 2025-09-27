@@ -1,0 +1,181 @@
+name: Integration Test - Full Update Simulation
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_branch:
+        description: 'Branch to test on (will be created/reset)'
+        required: false
+        default: 'test/ytdlp-update-simulation'
+      force_version:
+        description: 'Force specific yt-dlp version for testing'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Create/Reset test branch
+        run: |
+          test_branch="${{ github.event.inputs.test_branch }}"
+          echo "🔧 Setting up test branch: $test_branch"
+
+          # Delete remote branch if exists (ignore failures)
+          git push origin --delete "$test_branch" 2>/dev/null || echo "Branch doesn't exist remotely"
+
+          # Create fresh branch
+          git checkout -b "$test_branch"
+
+      - name: Simulate version update
+        id: simulate
+        run: |
+          force_version="${{ github.event.inputs.force_version }}"
+
+          if [[ -n "$force_version" ]]; then
+            echo "🔧 Using forced version: $force_version"
+            new_version="$force_version"
+          else
+            # Get actual latest version
+            echo "🔍 Fetching latest yt-dlp version from GitHub API"
+            new_version=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r '.tag_name')
+            echo "Latest version found: $new_version"
+          fi
+
+          current_version=$(grep "yt-dlp>=" pyproject.toml | sed 's/.*yt-dlp>=\([^"]*\).*/\1/')
+          echo "Current version: $current_version"
+
+          if [[ "$current_version" != "$new_version" ]]; then
+            echo "🔄 Simulating update: $current_version -> $new_version"
+
+            # Update pyproject.toml
+            sed -i "s/yt-dlp>=[^\"]*\"/yt-dlp>=$new_version\"/" pyproject.toml
+
+            # Verify change
+            echo "Updated line:"
+            grep "yt-dlp>=" pyproject.toml
+
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "old_version=$current_version" >> $GITHUB_OUTPUT
+            echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ Versions already match, forcing update for test"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "old_version=$current_version" >> $GITHUB_OUTPUT
+            echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update lock file
+        if: steps.simulate.outputs.needs_update == 'true'
+        run: |
+          echo "🔒 Updating lock file"
+          uv lock
+
+      - name: Run test suite
+        run: |
+          echo "🧪 Running test suite"
+          uv run python -m pytest tests/ -v --tb=short
+
+      - name: Test CLI functionality
+        run: |
+          echo "🧪 Testing CLI functionality"
+          uv run asa --version
+          uv run asa-soundboard --version
+          uv run asa-generate-soundboard --help > /dev/null
+          echo "✅ All CLI commands working"
+
+      - name: Test yt-dlp functionality
+        run: |
+          echo "🧪 Testing yt-dlp functionality with updated version"
+
+          # Test basic functionality
+          uv run yt-dlp --version
+
+          # Test video info (may fail in CI, but worth trying)
+          uv run yt-dlp --no-playlist --get-id "https://www.youtube.com/watch?v=BaW_jenozKc" || {
+            echo "⚠️ Video ID extraction failed (may be expected in CI environment)"
+          }
+
+      - name: Commit test changes
+        if: steps.simulate.outputs.needs_update == 'true'
+        run: |
+          git config user.name "GitHub Actions Test"
+          git config user.email "actions@github.com"
+
+          git add pyproject.toml uv.lock
+          git commit -m "Test: Update yt-dlp from ${{ steps.simulate.outputs.old_version }} to ${{ steps.simulate.outputs.new_version }}"
+
+      - name: Push test branch
+        if: steps.simulate.outputs.needs_update == 'true'
+        run: |
+          test_branch="${{ github.event.inputs.test_branch }}"
+          git push -f origin "$test_branch"
+
+      - name: Create test PR
+        if: steps.simulate.outputs.needs_update == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "🧪 TEST: yt-dlp update simulation (${{ steps.simulate.outputs.old_version }} → ${{ steps.simulate.outputs.new_version }})"
+          body: |
+            ## 🧪 Integration Test Results
+
+            This is a **TEST PR** created by the integration test workflow.
+
+            **⚠️ DO NOT MERGE - FOR TESTING ONLY**
+
+            ### Test Results
+            - ✅ Version update simulation successful
+            - ✅ Lock file updated without errors
+            - ✅ All tests passing
+            - ✅ CLI functionality verified
+            - ✅ yt-dlp installation working
+
+            ### Changes
+            - Updated yt-dlp from `${{ steps.simulate.outputs.old_version }}` to `${{ steps.simulate.outputs.new_version }}`
+            - Updated `uv.lock` file
+
+            ### Next Steps
+            - Review the changes
+            - Close this PR when testing is complete
+            - The actual automation will create real PRs when needed
+
+            ---
+            *Created by integration test workflow*
+          branch: ${{ github.event.inputs.test_branch }}
+          delete-branch: false
+          draft: true
+          labels: |
+            🧪 test
+            🤖 automated
+            do-not-merge
+
+      - name: Summary
+        run: |
+          echo "🎉 Integration Test Summary"
+          echo "=========================="
+          echo "Test Branch: ${{ github.event.inputs.test_branch }}"
+          echo "Old Version: ${{ steps.simulate.outputs.old_version }}"
+          echo "New Version: ${{ steps.simulate.outputs.new_version }}"
+          echo "Update Needed: ${{ steps.simulate.outputs.needs_update }}"
+          echo ""
+          echo "✅ Integration test completed successfully!"
+          echo "📝 Check the draft PR for detailed results"
