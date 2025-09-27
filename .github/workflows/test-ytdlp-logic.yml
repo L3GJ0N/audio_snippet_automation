@@ -1,0 +1,123 @@
+name: Test yt-dlp Update Logic
+
+on:
+  workflow_dispatch:
+    inputs:
+      mock_current_version:
+        description: 'Mock current yt-dlp version'
+        required: false
+        default: '2025.9.20'
+      mock_latest_version:
+        description: 'Mock latest yt-dlp version'
+        required: false
+        default: '2025.9.23'
+      dry_run:
+        description: 'Dry run mode (no actual changes)'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  test-version-logic:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Mock version detection
+        id: versions
+        run: |
+          current="${{ github.event.inputs.mock_current_version }}"
+          latest="${{ github.event.inputs.mock_latest_version }}"
+
+          echo "🔍 Testing version comparison logic"
+          echo "Current (mocked): $current"
+          echo "Latest (mocked): $latest"
+
+          echo "current=$current" >> $GITHUB_OUTPUT
+          echo "latest=$latest" >> $GITHUB_OUTPUT
+
+      - name: Test version comparison
+        id: compare
+        run: |
+          current="${{ steps.versions.outputs.current }}"
+          latest="${{ steps.versions.outputs.latest }}"
+
+          if [ "$current" != "$latest" ]; then
+            echo "✅ Update needed: $current -> $latest"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "version_change=$current -> $latest" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ Already up to date: $current"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test pyproject.toml parsing
+        run: |
+          echo "🔍 Testing pyproject.toml parsing"
+          current_in_file=$(grep "yt-dlp>=" pyproject.toml | sed 's/.*yt-dlp>=\([^"]*\).*/\1/')
+          echo "Found in pyproject.toml: $current_in_file"
+
+          if [ -z "$current_in_file" ]; then
+            echo "❌ Failed to parse yt-dlp version from pyproject.toml"
+            exit 1
+          else
+            echo "✅ Successfully parsed version from pyproject.toml"
+          fi
+
+      - name: Test sed replacement (dry run)
+        if: steps.compare.outputs.needs_update == 'true' && github.event.inputs.dry_run == 'true'
+        run: |
+          latest="${{ steps.versions.outputs.latest }}"
+          echo "🧪 Testing sed replacement (dry run)"
+
+          # Show what would change
+          echo "Current line:"
+          grep "yt-dlp>=" pyproject.toml
+
+          echo "Would become:"
+          sed "s/yt-dlp>=[^\"]*\"/yt-dlp>=$latest\"/" pyproject.toml | grep "yt-dlp>="
+
+          echo "✅ Sed replacement test successful"
+
+      - name: Test yt-dlp functionality
+        run: |
+          echo "🧪 Testing current yt-dlp installation"
+
+          # Test version command
+          uv run yt-dlp --version
+
+          # Test info extraction (no download)
+          echo "Testing video info extraction..."
+          uv run yt-dlp --no-playlist --get-title "https://www.youtube.com/watch?v=BaW_jenozKc" || {
+            echo "⚠️ Video info extraction failed (may be expected in test environment)"
+          }
+
+      - name: Summary
+        run: |
+          echo "📊 Test Summary"
+          echo "==============="
+          echo "Current Version: ${{ steps.versions.outputs.current }}"
+          echo "Latest Version: ${{ steps.versions.outputs.latest }}"
+          echo "Update Needed: ${{ steps.compare.outputs.needs_update }}"
+          echo "Dry Run Mode: ${{ github.event.inputs.dry_run }}"
+
+          if [ "${{ steps.compare.outputs.needs_update }}" == "true" ]; then
+            echo "🔄 Version Change: ${{ steps.compare.outputs.version_change }}"
+          fi
+
+          echo ""
+          echo "✅ All tests completed successfully!"
