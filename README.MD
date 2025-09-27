@@ -168,9 +168,9 @@ You can specify times in multiple formats:
 - 🔐 **Age-restricted videos** - Cookie support for restricted content
 - 🐍 **Modern Python** - Built with modern tooling and best practices
 
-## 🎚️ Virtual DJ Soundboard
+## 🎚️ MemeDeck Live
 
-Once you've created your audio snippets, use the included **Virtual DJ Soundboard** to play them instantly with a customizable button grid!
+Once you've created your audio snippets, use the included **MemeDeck Live** deck to play them instantly with a customizable button grid!
 
 ### Quick Start
 
@@ -206,7 +206,7 @@ The browser soundboard now ships with a **Launchpad-style deck** complete with n
 
 - 🎨 **Pad colors** – Update the `accentPalette` array in `src/audio_snippet_automation/static/js/soundboard.js` to change or expand the set of pad hues.
 - 🧱 **Board styling** – Tweak the CSS variables at the top of `src/audio_snippet_automation/templates/soundboard.html` to adjust gradients, shadows, or typography.
-- 🪪 **Labels** – Button labels and positions are rendered beneath each pad; edit your soundboard JSON labels or CSS `.pad-meta` rules to modify typography or hide metadata.
+- 🪪 **Labels** – Button labels are rendered directly on each pad; edit your soundboard JSON labels or tweak the `.pad-meta` rules to adjust typography or styling.
 - 🚨 **Status banner** – The floating status pill mirrors the pad colors; adjust the `.status-indicator` rules in the template if you want a different placement or tone.
 
 ### Configuration Format
@@ -457,7 +457,7 @@ audio_snippet_automation/
 │   └── audio_snippet_automation/
 │       ├── __init__.py
 │       ├── snippet_cli.py      # Audio snippet automation CLI
-│       ├── soundboard_cli.py   # Virtual DJ soundboard CLI
+│       ├── soundboard_cli.py   # MemeDeck Live CLI
 │       ├── soundboard.py       # Soundboard backend
 │       ├── core.py             # Core audio processing logic
 │       └── templates/          # Web interface templates

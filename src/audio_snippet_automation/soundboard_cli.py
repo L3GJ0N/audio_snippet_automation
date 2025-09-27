@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Command-line interface for the Virtual DJ Soundboard.
+Command-line interface for MemeDeck Live.
 
 This module provides a CLI to launch the web-based soundboard interface.
 """
@@ -111,7 +111,7 @@ def main(
     verbose: bool,
     create_example: Path,
 ) -> int:
-    """Virtual DJ Soundboard - A customizable grid-based audio playback interface
+    """MemeDeck Live - A customizable grid-based audio playback interface
 
     Examples:
       asa-soundboard --config soundboard.json
