@@ -63,13 +63,39 @@ python test_ytdlp_logic.py
 
 ## Usage
 
-### Test the basic update workflow
-```bash
-# Test the update-ytdlp workflow
-act workflow_dispatch -W .github/workflows/update-ytdlp.yml
+### Quick Start (Recommended for Windows)
 
-# Test with specific event
-act schedule -W .github/workflows/update-ytdlp.yml
+**Test workflow logic without Docker:**
+```powershell
+# Test all workflow logic with unit tests - works immediately
+uv run python -m pytest tests/workflows/test_ytdlp_logic.py -v
+
+# Test specific functionality
+uv run python -c "
+from tests.workflows.test_ytdlp_logic import *
+t = TestVersionParsing()
+t.test_version_comparison()
+print('✅ Version logic works!')
+"
+```
+
+### Advanced Testing with act (Requires Docker)
+
+**List available jobs:**
+```bash
+act --list
+```
+
+**Test specific workflows:**
+```bash
+# Test the workflow logic validation
+act -j test-version-logic
+
+# Test integration workflow
+act -j integration-test
+
+# Test the basic update workflow
+act workflow_dispatch -W .github/workflows/update-ytdlp.yml
 
 # Test the health check workflow
 act workflow_dispatch -W .github/workflows/update-ytdlp-health.yml
@@ -82,12 +108,6 @@ echo "GITHUB_TOKEN=your_token_here" > .secrets
 
 # Run with secrets
 act -s GITHUB_TOKEN workflow_dispatch -W .github/workflows/update-ytdlp.yml
-```
-
-### Test specific job
-```bash
-# Test only the update job
-act -j update workflow_dispatch -W .github/workflows/update-ytdlp-health.yml
 ```
 
 ## Prerequisites
@@ -125,6 +145,34 @@ Create `.actrc` file in project root:
    # Restart PowerShell or open new terminal window
    # Or manually add to PATH: C:\Users\<username>\AppData\Local\Microsoft\WinGet\Packages\nektos.act_Microsoft.Winget.Source_8wekyb3d8bbwe
    ```
+
+2. **"Could not find any stages to run" / Wrong job name**
+   ```powershell
+   # List all available jobs first
+   act --list
+
+   # Use correct job names:
+   act -j test-version-logic    # ✅ Correct
+   act -j test-ytdlp-logic      # ❌ Wrong
+   ```
+
+3. **Docker not installed or running**
+   ```
+   Error: Could not find any stages to run
+   time="..." level=warning msg="Couldn't get a valid docker connection..."
+   ```
+
+   **Solutions:**
+   - **Without Docker (Recommended):** Use unit tests instead:
+     ```powershell
+     uv run python -m pytest tests/workflows/test_ytdlp_logic.py -v
+     ```
+
+   - **With Docker:** Install Docker Desktop:
+     1. Download from https://www.docker.com/products/docker-desktop/
+     2. Install and start Docker Desktop
+     3. Wait for Docker to be ready (check system tray)
+     4. Test: `docker run hello-world`
 
 2. **Docker not running**
    ```
