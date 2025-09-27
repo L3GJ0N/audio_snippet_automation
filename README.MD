@@ -198,6 +198,17 @@ asa-soundboard --config my_soundboard.json
 ffmpeg -i input.m4a output.wav
 ```
 
+### Launchpad-Inspired Interface
+
+The browser soundboard now ships with a **Launchpad-style deck** complete with neon pads, a brushed-metal frame, and glowing play feedback. Each pad receives a color from a curated palette, and active pads pulse with an LED halo so you can see what is playing at a glance—perfect for live DJ work or streaming overlays.
+
+#### Customizing the look
+
+- 🎨 **Pad colors** – Update the `accentPalette` array in `src/audio_snippet_automation/static/js/soundboard.js` to change or expand the set of pad hues.
+- 🧱 **Board styling** – Tweak the CSS variables at the top of `src/audio_snippet_automation/templates/soundboard.html` to adjust gradients, shadows, or typography.
+- 🪪 **Labels** – Button labels and positions are rendered beneath each pad; edit your soundboard JSON labels or CSS `.pad-meta` rules to modify typography or hide metadata.
+- 🚨 **Status banner** – The floating status pill mirrors the pad colors; adjust the `.status-indicator` rules in the template if you want a different placement or tone.
+
 ### Configuration Format
 
 Create a JSON file with your button layout:
