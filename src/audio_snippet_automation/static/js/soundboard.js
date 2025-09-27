@@ -86,6 +86,11 @@ function createSoundboard() {
     grid.innerHTML = '';
     const [rows, cols] = config.layout;
 
+    if (rows > 0 && cols > 0) {
+        grid.style.setProperty('grid-template-columns', `repeat(${cols}, minmax(0, 1fr))`);
+        grid.style.setProperty('grid-template-rows', `repeat(${rows}, minmax(0, 1fr))`);
+    }
+
     const buttonMap = new Map();
     config.buttons.forEach((button, index) => {
         const key = `${button.row}_${button.col}`;
@@ -127,7 +132,6 @@ function createSoundButton(button) {
 
     const padSurface = document.createElement('div');
     padSurface.className = 'pad-surface';
-    padShell.appendChild(padSurface);
 
     const padMeta = document.createElement('div');
     padMeta.className = 'pad-meta';
@@ -136,15 +140,12 @@ function createSoundButton(button) {
     labelText.className = 'pad-label';
     labelText.textContent = button.label || `Pad ${button.row},${button.col}`;
 
-    const positionText = document.createElement('span');
-    positionText.className = 'pad-position';
-    positionText.textContent = `R${button.row} · C${button.col}`;
-
     padMeta.appendChild(labelText);
-    padMeta.appendChild(positionText);
+
+    padSurface.appendChild(padMeta);
+    padShell.appendChild(padSurface);
 
     element.appendChild(padShell);
-    element.appendChild(padMeta);
 
     element.addEventListener('click', () => playSound(button.id, element));
 
