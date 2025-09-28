@@ -1,0 +1,7 @@
+# Bandit configuration file (YAML format)
+# https://bandit.readthedocs.io/en/latest/config.html
+
+# Skip these tests as they are false positives for our use case
+skips:
+  - B404  # subprocess import - we need subprocess for ffmpeg/yt-dlp execution
+  - B603  # subprocess without shell=True - our code properly validates arguments
