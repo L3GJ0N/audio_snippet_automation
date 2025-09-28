@@ -119,14 +119,14 @@ jobs:
     - name: Run safety check
       continue-on-error: true
       run: |
-        uv run pip install safety
-        uv run safety check
+        uv tool install safety
+        uv tool run safety check
 
     - name: Run bandit security scan
       continue-on-error: true
       run: |
-        uv run pip install bandit
-        uv run bandit -r src/
+        uv tool install bandit
+        uv tool run bandit -r src/
 
   build:
     name: Build Distribution
