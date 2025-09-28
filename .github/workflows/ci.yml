@@ -123,10 +123,9 @@ jobs:
         uv tool run safety check
 
     - name: Run bandit security scan
-      continue-on-error: true
       run: |
         uv tool install bandit
-        uv tool run bandit -r src/
+        uv tool run bandit -r src/ -c .bandit
 
   build:
     name: Build Distribution
