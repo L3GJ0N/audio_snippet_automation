@@ -44,6 +44,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
+    - name: Setup virtual audio for testing
+      run: |
+        # Install audio system dependencies for headless testing
+        sudo apt-get install -y pulseaudio alsa-utils
+        # Setup dummy audio driver for pygame/soundboard tests
+        export PULSE_RUNTIME_PATH=/tmp/pulse
+        mkdir -p /tmp/pulse
+        # Start pulseaudio in daemon mode with dummy audio
+        pulseaudio --start --exit-idle-time=-1 --system=false --disable-shm=true
+        # Set SDL audio driver to pulse for pygame
+        echo "SDL_AUDIODRIVER=pulse" >> $GITHUB_ENV
+
     - name: Install dependencies
       run: |
         uv sync --extra dev
@@ -62,6 +74,9 @@ jobs:
         uv run mypy src/ || echo "MyPy not configured or failed"
 
     - name: Test with pytest
+      env:
+        SDL_AUDIODRIVER: pulse
+        PULSE_RUNTIME_PATH: /tmp/pulse
       run: |
         uv run pytest tests/ -v --cov=audio_snippet_automation --cov-report=xml --cov-report=term-missing
 
