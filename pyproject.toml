@@ -9,7 +9,7 @@ description = "Create multiple precisely trimmed audio snippets from YouTube URL
 readme = "README.MD"
 license = {text = "MIT"}
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "L3GJ0N" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -101,7 +101,7 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = [
-    "E501",  # line too long, handled by black
+    "E501",  # line too long, handled by ruff formatter
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
@@ -112,6 +112,12 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 # Pytest configuration
 [tool.pytest.ini_options]
