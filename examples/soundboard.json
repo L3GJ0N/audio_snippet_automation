@@ -1,44 +1,254 @@
 {
   "layout": {
-    "rows": 4,
+    "rows": 7,
     "cols": 6
   },
   "buttons": [
     {
-      "file": "snippets/example_clip_1.m4a",
+      "file": "snippets/anakin_I_hate_you.wav",
       "row": 1,
       "col": 1,
-      "label": "Example Sound 1"
+      "label": "Anakin I Hate You"
     },
     {
-      "file": "snippets/example_clip_2.wav",
+      "file": "snippets/are_you_in_or_out_long.wav",
       "row": 1,
       "col": 2,
-      "label": "Example Sound 2"
+      "label": "Are You In Or Out Long"
     },
     {
-      "file": "snippets/my_audio_snippet.m4a",
+      "file": "snippets/are_you_in_or_out_short.wav",
       "row": 1,
       "col": 3,
-      "label": "My Custom Audio"
+      "label": "Are You In Or Out Short"
     },
     {
-      "file": "C:/path/to/your/audio/file.wav",
+      "file": "snippets/burger_nuggets_nuggets_burger.wav",
+      "row": 1,
+      "col": 4,
+      "label": "Burger Nuggets Nuggets Burger"
+    },
+    {
+      "file": "snippets/coin_toss_friendo.wav",
+      "row": 1,
+      "col": 5,
+      "label": "Coin Toss Friendo"
+    },
+    {
+      "file": "snippets/der_schrank_ist_im_grunde_genommen_auf.wav",
+      "row": 1,
+      "col": 6,
+      "label": "Der Schrank Ist Im Grunde Genommen Auf"
+    },
+    {
+      "file": "snippets/dp_206_bones.wav",
       "row": 2,
       "col": 1,
-      "label": "Absolute Path Example"
+      "label": "Dp 206 Bones"
     },
     {
-      "file": "./relative/path/to/audio.mp3",
+      "file": "snippets/dp_bye_bye_bye.wav",
       "row": 2,
       "col": 2,
-      "label": "Relative Path Example"
+      "label": "Dp Bye Bye Bye"
     },
     {
-      "file": "snippets/generated_by_asa.m4a",
+      "file": "snippets/i_am_in_the_dark.wav",
       "row": 2,
       "col": 3,
-      "label": "Generated Snippet"
+      "label": "I Am In The Dark"
+    },
+    {
+      "file": "snippets/i_can_do_this_all_day.wav",
+      "row": 2,
+      "col": 4,
+      "label": "I Can Do This All Day"
+    },
+    {
+      "file": "snippets/i_dont_play_the_odds.wav",
+      "row": 2,
+      "col": 5,
+      "label": "I Dont Play The Odds"
+    },
+    {
+      "file": "snippets/i_m_always_angry.wav",
+      "row": 2,
+      "col": 6,
+      "label": "I M Always Angry"
+    },
+    {
+      "file": "snippets/ill_be_back.wav",
+      "row": 3,
+      "col": 1,
+      "label": "Ill Be Back"
+    },
+    {
+      "file": "snippets/jules_english_mf_do_you_speak_it.wav",
+      "row": 3,
+      "col": 2,
+      "label": "Jules English Mf Do You Speak It"
+    },
+    {
+      "file": "snippets/keanu_reaves_i_dont_lose.wav",
+      "row": 3,
+      "col": 3,
+      "label": "Keanu Reaves I Dont Lose"
+    },
+    {
+      "file": "snippets/lisan_al_gaib.wav",
+      "row": 3,
+      "col": 4,
+      "label": "Lisan Al Gaib"
+    },
+    {
+      "file": "snippets/nicholson-you_cant_handle_the_truth.wav",
+      "row": 3,
+      "col": 5,
+      "label": "Nicholson You Cant Handle The Truth"
+    },
+    {
+      "file": "snippets/noice.wav",
+      "row": 3,
+      "col": 6,
+      "label": "Noice"
+    },
+    {
+      "file": "snippets/obi_wan_you_were_the_chosen_one.wav",
+      "row": 4,
+      "col": 1,
+      "label": "Obi Wan You Were The Chosen One"
+    },
+    {
+      "file": "snippets/okay_lets_go.wav",
+      "row": 4,
+      "col": 2,
+      "label": "Okay Lets Go"
+    },
+    {
+      "file": "snippets/pacino-if_shit_hits_the_fan.wav",
+      "row": 4,
+      "col": 3,
+      "label": "Pacino If Shit Hits The Fan"
+    },
+    {
+      "file": "snippets/same_same_but_different.wav",
+      "row": 4,
+      "col": 4,
+      "label": "Same Same But Different"
+    },
+    {
+      "file": "snippets/same_same_long_cut.wav",
+      "row": 4,
+      "col": 5,
+      "label": "Same Same Long Cut"
+    },
+    {
+      "file": "snippets/simply_the_best.wav",
+      "row": 4,
+      "col": 6,
+      "label": "Simply The Best"
+    },
+    {
+      "file": "snippets/surprise_mf.wav",
+      "row": 5,
+      "col": 1,
+      "label": "Surprise Mf"
+    },
+    {
+      "file": "snippets/thanos-desperate_fail.wav",
+      "row": 5,
+      "col": 2,
+      "label": "Thanos Desperate Fail"
+    },
+    {
+      "file": "snippets/thanos-dreadt_it_run_from_it.wav",
+      "row": 5,
+      "col": 3,
+      "label": "Thanos Dreadt It Run From It"
+    },
+    {
+      "file": "snippets/thanos-like_to_lose.wav",
+      "row": 5,
+      "col": 4,
+      "label": "Thanos Like To Lose"
+    },
+    {
+      "file": "snippets/the_office_no_no_no_noooo.wav",
+      "row": 5,
+      "col": 5,
+      "label": "The Office No No No Noooo"
+    },
+    {
+      "file": "snippets/the_office_thats_what_she_said.wav",
+      "row": 5,
+      "col": 6,
+      "label": "The Office Thats What She Said"
+    },
+    {
+      "file": "snippets/there_is_no_tomorrow.wav",
+      "row": 6,
+      "col": 1,
+      "label": "There Is No Tomorrow"
+    },
+    {
+      "file": "snippets/this_little_maneuver_s_gonna_cost_us_51_years.wav",
+      "row": 6,
+      "col": 2,
+      "label": "This Little Maneuver S Gonna Cost Us 51 Years"
+    },
+    {
+      "file": "snippets/tropic_thunder_duck_your_own_face.wav",
+      "row": 6,
+      "col": 3,
+      "label": "Tropic Thunder Duck Your Own Face"
+    },
+    {
+      "file": "snippets/trump_china.wav",
+      "row": 6,
+      "col": 4,
+      "label": "Trump China"
+    },
+    {
+      "file": "snippets/trump_i_love_the_poorly_educated.wav",
+      "row": 6,
+      "col": 5,
+      "label": "Trump I Love The Poorly Educated"
+    },
+    {
+      "file": "snippets/trump_i_think_we_gonna_have_a_good_night.wav",
+      "row": 6,
+      "col": 6,
+      "label": "Trump I Think We Gonna Have A Good Night"
+    },
+    {
+      "file": "snippets/wenn_er_straight_durcharbeitet.wav",
+      "row": 7,
+      "col": 1,
+      "label": "Wenn Er Straight Durcharbeitet"
+    },
+    {
+      "file": "snippets/ww-i_am_the_danger.wav",
+      "row": 7,
+      "col": 2,
+      "label": "Ww I Am The Danger"
+    },
+    {
+      "file": "snippets/ww-i_am_the_one_who_knocks.wav",
+      "row": 7,
+      "col": 3,
+      "label": "Ww I Am The One Who Knocks"
+    },
+    {
+      "file": "snippets/ww_say_my_name.wav",
+      "row": 7,
+      "col": 4,
+      "label": "Ww Say My Name"
+    },
+    {
+      "file": "snippets/ww_youre_goddamn_right.wav",
+      "row": 7,
+      "col": 5,
+      "label": "Ww Youre Goddamn Right"
     }
   ]
 }
